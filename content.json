@@ -1,0 +1,40 @@
+{
+    "name": "Moben Haq",
+    "languages": [
+      "Golang",
+      "C++",
+      "Python",
+      "JavaScript"
+    ],
+    "projects": [
+      {
+        "name": "Employee CRUD",
+        "framework": "Angular"
+      },
+      {
+        "name": "React Portfolio",
+        "framework": "React"
+      }
+    ],
+    "frameworks": [
+      "React",
+      "Angular"
+    ],
+    "infrastructure": [
+      "Terraform",
+      "AWS"
+    ],
+    "certifications": [
+      "AWS Developer",
+      "C++",
+      "Security+"
+    ],
+    "specialization": "Specializing in crafting efficient UIs with React and Angular, I harness the power of modern web frameworks and DevOps tools to develop and deploy seamless software solutions.",
+    "contact": {
+      "phone": "(951) 337-8563",
+      "email": "moben.h@outlook.com",
+      "linkedin": "https://www.linkedin.com/in/moben-haq",
+      "github": "https://github.com/moben-haq"
+    }
+  }
+  

@@ -1,0 +1,61 @@
+{
+  "name": "Moben Haq",
+  "languages": ["Golang", "C++", "Python", "JavaScript", "TypeScript"],
+  "projects": [
+    {
+      "name": "Employee CRUD",
+      "framework": "Angular"
+    },
+    {
+      "name": "React Portfolio",
+      "framework": "React",
+      "url": "https://mobenh.com",
+      "github": "https://github.com/mobenh/react-portfolio",
+      "description": "Developed a responsive and dynamic portfolio using React.js, demonstrating proficiency in HTML, CSS, and JavaScript."
+    },
+    {
+      "name": "Infrastructure Automation",
+      "framework": "Terraform",
+      "url": "https://github.com/mobenh/terraform-aws-ec2instance",
+      "description": "Automated instance deployment using EC2, AWS CLI, and Terraform."
+    },
+    {
+      "name": "Slack AI Bot",
+      "framework": "Golang",
+      "url": "https://github.com/mobenh/Golang-AI-Bot",
+      "description": "Developed a Slack bot using Wit.ai and Wolfram Alpha."
+    }
+  ],
+  "frameworks": ["React", "Angular", "Node.js"],
+  "infrastructure": ["Terraform", "AWS"],
+  "certifications": [
+    "AWS Developer",
+    "AWS SysOps Administrator",
+    "AWS Cloud Practitioner",
+    "C++ Programmer",
+    "CompTIA Security+"
+  ],
+  "specialization": "Specializing in crafting efficient UIs with React and Angular, I harness the power of modern web frameworks and DevOps tools to develop and deploy seamless software solutions.",
+  "contact": {
+    "phone": "(951) 337-8563",
+    "email": "moben.h@outlook.com",
+    "linkedin": "https://www.linkedin.com/in/moben-haq",
+    "github": "https://github.com/moben-haq"
+  },
+  "objective": "Dedicated software quality assurance professional with experience in manual testing, test case execution, and delivering high-quality software solutions. Adept at adhering to test procedures and accurately reporting results.",
+  "skills": {
+    "programming_languages": [
+      "JavaScript",
+      "TypeScript",
+      "Golang",
+      "Python",
+      "C++",
+      "React",
+      "Angular",
+      "Node.js",
+      "AWS",
+      "Terraform",
+      "Postman"
+    ]
+  }
+}
