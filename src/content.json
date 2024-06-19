@@ -26,35 +26,43 @@
   "certifications": [
     {
       "name": "AWS Developer",
-      "issuer": "Amazon Web Services"
+      "issuer": "Amazon Web Services",
+      "link": "https://www.credly.com/badges/eeec4827-eced-4567-853b-bfe0b391f083/public_url"
     },
     {
       "name": "AWS SysOps Administrator",
-      "issuer": "Amazon Web Services"
+      "issuer": "Amazon Web Services",
+      "link": "https://www.credly.com/badges/3611f19e-cfb4-4633-a5ea-1a095da9f9fd/public_url"
     },
     {
       "name": "AWS Cloud Practitioner",
-      "issuer": "Amazon Web Services"
+      "issuer": "Amazon Web Services",
+      "link": "https://www.credly.com/badges/15126f58-f26b-4410-9a44-a1497b352e6a/public_url"
     },
     {
       "name": "C++ Programmer",
-      "issuer": "C++ Institute"
+      "issuer": "C++ Institute",
+      "link": "https://www.credly.com/badges/2be8519a-87bb-4da7-bade-026d50109a5c/public_url"
     },
     {
       "name": "CompTIA Security+",
-      "issuer": "CompTIA"
+      "issuer": "CompTIA",
+      "link": "https://www.credly.com/badges/45791a13-9ee4-4127-8aa2-e3c33b9e31f6/public_url"
     },
     {
       "name": "CompTIA A+",
-      "issuer": "CompTIA"
+      "issuer": "CompTIA",
+      "link": "https://www.credly.com/badges/1af12b15-3394-4a18-92f6-9471c4987f04/public_url"
     },
     {
       "name": "CompTIA Network+",
-      "issuer": "CompTIA"
+      "issuer": "CompTIA",
+      "link": "https://www.credly.com/badges/f6464041-b86f-4dd1-a30d-e641e71ca9e5/public_url"
     },
     {
       "name": "Microsoft Excel",
-      "issuer": "Microsoft"
+      "issuer": "Microsoft",
+      "link": "https://www.credly.com/badges/15126f58-f26b-4410-9a44-a1497b352e6a/public_url"
     },
     {
       "name": "Azure Administrator AZ104 (in progress)",
@@ -68,5 +76,5 @@
     "linkedin": "https://www.linkedin.com/in/moben-haq",
     "github": "https://github.com/moben-haq"
   },
-"objective": "Dedicated software quality assurance professional with experience in manual testing, test case execution, and delivering high-quality software solutions. Adept at adhering to test procedures and accurately reporting results. Specializing in crafting efficient UIs with React and Angular, I harness the power of modern web frameworks and DevOps tools to develop and deploy seamless software solutions."
+  "objective": "Dedicated software quality assurance professional with experience in manual testing, test case execution, and delivering high-quality software solutions. Adept at adhering to test procedures and accurately reporting results. Specializing in crafting efficient UIs with React and Angular, I harness the power of modern web frameworks and DevOps tools to develop and deploy seamless software solutions."
 }
