@@ -21,13 +21,30 @@ body {
   padding: 20px;
   margin: 20px auto;
   width: 80%;
-  border-left: 4px solid #007bff;
 }
 
 .roadmap-item {
   position: relative;
-  padding-left: 40px;
+  padding: 20px;
+  width: 45%;
   margin-bottom: 30px;
+  transition: transform 0.3s;
+}
+
+.roadmap-item-left {
+  float: left;
+  clear: both;
+  transform: translateX(-10%);
+}
+
+.roadmap-item-right {
+  float: right;
+  clear: both;
+  transform: translateX(10%);
+}
+
+.roadmap-item:hover {
+  transform: scale(1.05);
 }
 
 .roadmap-item-content {
@@ -40,12 +57,19 @@ body {
 
 .roadmap-dot {
   position: absolute;
-  top: 0;
-  left: -9px;
+  top: 20px;
   width: 18px;
   height: 18px;
   background-color: #007bff;
   border-radius: 50%;
+}
+
+.roadmap-item-left .roadmap-dot {
+  right: -9px;
+}
+
+.roadmap-item-right .roadmap-dot {
+  left: -9px;
 }
 
 h1, h2, h3, h4 {
