@@ -16,35 +16,46 @@ body {
   text-align: center;
 }
 
+.header h1 {
+  color: white;
+}
+
 .roadmap {
   position: relative;
   padding: 20px;
   margin: 20px auto;
   width: 80%;
+  overflow: hidden; /* Ensure the container includes floated items */
+}
+
+.roadmap-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  background-color: #007bff;
+  transform: translateX(-50%);
+  height: 100%;
 }
 
 .roadmap-item {
   position: relative;
-  padding: 20px;
   width: 45%;
-  margin-bottom: 30px;
-  transition: transform 0.3s;
+  padding: 20px;
+  margin: 20px 0;
 }
 
-.roadmap-item-left {
+.roadmap-item.left {
   float: left;
   clear: both;
-  transform: translateX(-10%);
+  margin-left: 0;
 }
 
-.roadmap-item-right {
+.roadmap-item.right {
   float: right;
   clear: both;
-  transform: translateX(10%);
-}
-
-.roadmap-item:hover {
-  transform: scale(1.05);
+  margin-right: 0;
 }
 
 .roadmap-item-content {
@@ -64,11 +75,11 @@ body {
   border-radius: 50%;
 }
 
-.roadmap-item-left .roadmap-dot {
+.roadmap-item.left .roadmap-dot {
   right: -9px;
 }
 
-.roadmap-item-right .roadmap-dot {
+.roadmap-item.right .roadmap-dot {
   left: -9px;
 }
 

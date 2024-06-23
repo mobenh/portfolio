@@ -5,13 +5,13 @@ import content from './content.json';
 
 const { languages, projects, frameworks, infrastructure, certifications, contact, objective } = content;
 
-const RoadmapItem = ({ title, content, index }) => (
-  <div className={`roadmap-item roadmap-item-${index % 2 === 0 ? 'left' : 'right'}`}>
+const RoadmapItem = ({ title, content, side }) => (
+  <div className={`roadmap-item ${side}`}>
+    <div className="roadmap-dot"></div>
     <div className="roadmap-item-content">
       <h3>{title}</h3>
       {content}
     </div>
-    <div className="roadmap-dot"></div>
   </div>
 );
 
@@ -32,28 +32,42 @@ const CertificationCard = ({ certification }) => (
   </div>
 );
 
+const RoadmapLine = () => (
+  <div className="roadmap-line"></div>
+);
+
 const Portfolio = () => (
   <div className="portfolio">
     <header className="header">
-      <h1>{contact.name}'s Portfolio Roadmap</h1>
+      <h1>{contact.name}</h1>
       <p>{objective}</p>
     </header>
     <div className="roadmap">
-      <RoadmapItem title="Languages" content={<ul>{languages.map((lang, index) => <li key={index}>{lang}</li>)}</ul>} index={0} />
-      <RoadmapItem title="Projects" content={<div className="projects">{projects.map((project, index) => <ProjectCard key={index} project={project} />)}</div>} index={1} />
-      <RoadmapItem title="Frameworks" content={<ul>{frameworks.map((framework, index) => <li key={index}>{framework}</li>)}</ul>} index={2} />
-      <RoadmapItem title="Infrastructure" content={<ul>{infrastructure.map((tech, index) => <li key={index}>{tech}</li>)}</ul>} index={3} />
-      <RoadmapItem title="Certifications" content={<div className="certifications">{certifications.map((cert, index) => <CertificationCard key={index} certification={cert} />)}</div>} index={4} />
-      <RoadmapItem title="Contact" content={
-        <div>
-          <p>Email: <a href={`mailto:${contact.email}`}>{contact.email}</a></p>
-          <p>Phone: {contact.phone}</p>
-          <p>
-            <a href={contact.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a> | 
-            <a href={contact.github} target="_blank" rel="noopener noreferrer">GitHub</a>
-          </p>
-        </div>
-      } index={5} />
+      <RoadmapLine />
+      {[
+        { title: "Languages", content: <ul>{languages.map((lang, index) => <li key={index}>{lang}</li>)}</ul> },
+        { title: "Projects", content: <div className="projects">{projects.map((project, index) => <ProjectCard key={index} project={project} />)}</div> },
+        { title: "Frameworks", content: <ul>{frameworks.map((framework, index) => <li key={index}>{framework}</li>)}</ul> },
+        { title: "Infrastructure", content: <ul>{infrastructure.map((tech, index) => <li key={index}>{tech}</li>)}</ul> },
+        { title: "Certifications", content: <div className="certifications">{certifications.map((cert, index) => <CertificationCard key={index} certification={cert} />)}</div> },
+        { title: "Contact", content: 
+          <div>
+            <p>Email: <a href={`mailto:${contact.email}`}>{contact.email}</a></p>
+            <p>Phone: {contact.phone}</p>
+            <p>
+              <a href={contact.linkedin} target="_blank" rel="noopener noreferrer">LinkedIn</a> | 
+              <a href={contact.github} target="_blank" rel="noopener noreferrer">GitHub</a>
+            </p>
+          </div>
+        }
+      ].map((item, index) => (
+        <RoadmapItem 
+          key={index} 
+          title={item.title} 
+          content={item.content} 
+          side={index % 2 === 0 ? 'left' : 'right'} 
+        />
+      ))}
     </div>
   </div>
 );
