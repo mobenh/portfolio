@@ -1,0 +1,126 @@
+body {
+  margin: 0;
+  font-family: 'Roboto', sans-serif;
+  background-color: #f0f2f5;
+  color: #333;
+}
+
+.header {
+  background-color: #282c34;
+  color: white;
+  padding: 20px;
+  text-align: center;
+}
+
+.header h1 {
+  color: white;
+}
+
+.roadmap {
+  position: relative;
+  padding: 20px;
+  margin: 20px auto;
+  width: 80%;
+  overflow: hidden;
+}
+
+.roadmap-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  background-color: #007bff;
+  transform: translateX(-50%);
+  height: 100%;
+}
+
+.roadmap-item {
+  position: relative;
+  width: 45%;
+  padding: 20px;
+  margin: 20px 0;
+}
+
+.roadmap-item.left {
+  float: left;
+  /* clear: both; */
+  margin-left: 0;
+  padding: 0;
+}
+
+.roadmap-item.right {
+  float: right;
+  /* clear: both; */
+  margin-right: 0;
+  padding: 0;
+}
+
+.roadmap-item-content {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.roadmap-connector {
+  position: absolute;
+  top: 50%;
+  width: 11%;
+  height: 2px;
+  background-color: #007bff;
+}
+
+.roadmap-item.left .roadmap-connector {
+  left: 100%;
+  transform: translateY(-50%);
+}
+
+.roadmap-item.right .roadmap-connector {
+  right: 100%;
+  transform: translateY(-50%);
+}
+
+h1, h2, h3, h4 {
+  color: #333;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+li {
+  padding: 5px 0;
+}
+
+.project-card, .certification-card {
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 10px;
+  margin: 10px 0;
+  background-color: white;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.project-card a, .certification-card a {
+  color: #007bff;
+  text-decoration: none;
+  display: block;
+  margin-top: 5px;
+}
+
+.project-card a:hover, .certification-card a:hover {
+  text-decoration: underline;
+}
+
+.projects, .certifications {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.contact p {
+  margin: 5px 0;
+}

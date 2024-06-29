@@ -65,8 +65,9 @@
       "link": "https://www.credly.com/badges/15126f58-f26b-4410-9a44-a1497b352e6a/public_url"
     },
     {
-      "name": "Azure Administrator AZ104 (in progress)",
-      "issuer": "Microsoft"
+      "name": "Azure Administrator AZ104",
+      "issuer": "Microsoft",
+      "link": "https://learn.microsoft.com/api/credentials/share/en-us/MobenHaq-8295/667B837CAC710E44?sharingId=8DB882188D2F4733"
     }
   ],
   "contact": {
