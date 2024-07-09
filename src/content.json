@@ -77,5 +77,14 @@
     "linkedin": "https://www.linkedin.com/in/moben-haq",
     "github": "https://github.com/moben-haq"
   },
-  "objective": "Dedicated software quality assurance professional with experience in manual testing, test case execution, and delivering high-quality software solutions. Adept at adhering to test procedures and accurately reporting results. Specializing in crafting efficient UIs with React and Angular, I harness the power of modern web frameworks and DevOps tools to develop and deploy seamless software solutions."
+  "unconnectedNodes": [
+    {
+      "name": "Moben Haq",
+      "position": { "x": 500, "y": 20 }
+    },
+    {
+      "name": "Specializing in crafting efficient UIs with React and Angular, I harness the power of modern web frameworks and DevOps tools to develop and deploy seamless software solutions.",
+      "position": { "x": 300, "y": 350 }
+    }
+  ]
 }
