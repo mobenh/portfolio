@@ -1,0 +1,90 @@
+{
+  "languages": ["Golang", "C++", "Python", "JavaScript", "TypeScript"],
+  "projects": [
+    {
+      "name": "React Portfolio",
+      "framework": "React",
+      "url": "https://mobenh.com",
+      "github": "https://github.com/mobenh/react-portfolio",
+      "description": "Developed a responsive and dynamic portfolio using React.js, demonstrating proficiency in HTML, CSS, and JavaScript."
+    },
+    {
+      "name": "Infrastructure Automation",
+      "framework": "Terraform",
+      "url": "https://github.com/mobenh/terraform-aws-ec2instance",
+      "description": "Automated instance deployment using EC2, AWS CLI, and Terraform."
+    },
+    {
+      "name": "Slack AI Bot",
+      "framework": "Golang",
+      "url": "https://github.com/mobenh/Golang-AI-Bot",
+      "description": "Developed a Slack bot using Wit.ai and Wolfram Alpha."
+    }
+  ],
+  "frameworks": ["React", "Angular", "Node.js"],
+  "infrastructure": ["Terraform", "AWS"],
+  "certifications": [
+    {
+      "name": "AWS Developer",
+      "issuer": "Amazon Web Services",
+      "link": "https://www.credly.com/badges/eeec4827-eced-4567-853b-bfe0b391f083/public_url"
+    },
+    {
+      "name": "AWS SysOps Administrator",
+      "issuer": "Amazon Web Services",
+      "link": "https://www.credly.com/badges/3611f19e-cfb4-4633-a5ea-1a095da9f9fd/public_url"
+    },
+    {
+      "name": "AWS Cloud Practitioner",
+      "issuer": "Amazon Web Services",
+      "link": "https://www.credly.com/badges/15126f58-f26b-4410-9a44-a1497b352e6a/public_url"
+    },
+    {
+      "name": "C++ Programmer",
+      "issuer": "C++ Institute",
+      "link": "https://www.credly.com/badges/2be8519a-87bb-4da7-bade-026d50109a5c/public_url"
+    },
+    {
+      "name": "CompTIA Security+",
+      "issuer": "CompTIA",
+      "link": "https://www.credly.com/badges/45791a13-9ee4-4127-8aa2-e3c33b9e31f6/public_url"
+    },
+    {
+      "name": "CompTIA A+",
+      "issuer": "CompTIA",
+      "link": "https://www.credly.com/badges/1af12b15-3394-4a18-92f6-9471c4987f04/public_url"
+    },
+    {
+      "name": "CompTIA Network+",
+      "issuer": "CompTIA",
+      "link": "https://www.credly.com/badges/f6464041-b86f-4dd1-a30d-e641e71ca9e5/public_url"
+    },
+    {
+      "name": "Microsoft Excel",
+      "issuer": "Microsoft",
+      "link": "https://www.credly.com/badges/15126f58-f26b-4410-9a44-a1497b352e6a/public_url"
+    },
+    {
+      "name": "Azure Administrator AZ104",
+      "issuer": "Microsoft",
+      "link": "https://learn.microsoft.com/api/credentials/share/en-us/MobenHaq-8295/667B837CAC710E44?sharingId=8DB882188D2F4733"
+    }
+  ],
+  "contact": {
+    "name": "Moben Haq",
+    "phone": "(951) 337-8563",
+    "email": "moben.h@outlook.com",
+    "linkedin": "https://www.linkedin.com/in/moben-haq",
+    "github": "https://github.com/moben-haq"
+  },
+  "unconnectedNodes": [
+    {
+      "name": "Moben Haq",
+      "position": { "x": 500, "y": 20 }
+    },
+    {
+      "name": "Specializing in crafting efficient UIs with React and Angular, I harness the power of modern web frameworks and DevOps tools to develop and deploy seamless software solutions.",
+      "position": { "x": 300, "y": 350 }
+    }
+  ]
+}

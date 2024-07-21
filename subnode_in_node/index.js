@@ -1,6 +1,15 @@
 import React, { useCallback, useEffect, memo } from 'react';
-import { createRoot } from 'react-dom/client';
-import ReactFlow, { useNodesState, useEdgesState, addEdge, Background, Controls, MiniMap, Handle, Position } from 'reactflow';
+import ReactDOM from 'react-dom';
+import ReactFlow, { 
+  useNodesState, 
+  useEdgesState, 
+  addEdge, 
+  Background, 
+  Controls, 
+  MiniMap, 
+  Handle, 
+  Position 
+} from 'reactflow';
 import 'reactflow/dist/style.css';
 import './index.css';
 import content from './content.json';
@@ -18,13 +27,19 @@ const getHandlePositions = (index, totalNodes) => {
   }
 };
 
+const SubNode = ({ data }) => (
+  <div style={{ padding: 5, background: '#f0f0f0', border: '1px solid #ccc', borderRadius: '3px', margin: '2px 0' }}>
+    {data.label}
+  </div>
+);
+
 const BiDirectionalNode = ({ data }) => {
   const { index, totalNodes } = data;
   const positions = ['top', 'bottom', 'left', 'right'];
   const handlePositions = getHandlePositions(index, totalNodes);
 
   return (
-    <div style={{ padding: 10, background: '#fff', border: '1px solid #ddd', transform: 'translateX(-50%)' }}>
+    <div style={{ padding: 10, background: '#fff', border: '1px solid #ddd', borderRadius: '5px', minWidth: '150px' }}>
       {positions.map((pos) =>
         handlePositions.includes(pos) && (
           <React.Fragment key={pos}>
@@ -33,7 +48,10 @@ const BiDirectionalNode = ({ data }) => {
           </React.Fragment>
         )
       )}
-      {data.label}
+      <div style={{ fontWeight: 'bold', marginBottom: '5px' }}>{data.label}</div>
+      {data.subNodes && data.subNodes.map((subNode, subIndex) => (
+        <SubNode key={subIndex} data={subNode} />
+      ))}
     </div>
   );
 };
@@ -42,8 +60,6 @@ const MemoizedBiDirectionalNode = memo(BiDirectionalNode);
 
 const SimpleNode = ({ data }) => (
   <div style={{ padding: 10, background: '#fff', border: '1px solid #ddd', transform: 'translateX(-50%)', maxWidth: '250px', wordWrap: 'break-word' }}>
-    <Handle type="source" position={Position.Left} id="a" />
-    <Handle type="target" position={Position.Left} id="b" />
     {data.label}
   </div>
 );
@@ -69,46 +85,31 @@ const getXPosition = (index, totalNodes) => {
   return fullPattern[posIndex];
 };
 
-const createLeafNodes = (parentNode, leafLabels) => {
-  return leafLabels.map((label, index) => ({
-    id: `${parentNode.id}-${label}`,
-    position: { x: parentNode.position.x + 150, y: parentNode.position.y + (index * 60) }, // 150 for horizontal spacing, 60 for vertical stacking
-    data: { label },
-    type: 'simple',
-    handlePosition: {
-      source: 'left',
-      target: 'left',
-    }
-  }));
-};
-
 const createInitialNodes = (content) => {
   const labels = Object.keys(content).filter(key => key !== 'unconnectedNodes');
   const totalNodes = labels.length;
-  const yScale = 100;
+  const yScale = 150; // Increased to accommodate subnodes
   let y = yScale;
 
-  const nodes = [];
-  labels.forEach((label, index) => {
+  const nodes = labels.map((label, index) => {
     const x = getXPosition(index, totalNodes);
     if ((index + 1) % 3 === 1 && index > 0) {
       y -= yScale;
     }
-    const mainNode = {
+    const node = {
       id: (index + 1).toString(),
       position: { x, y },
-      data: {
+      data: { 
         label: label.charAt(0).toUpperCase() + label.slice(1),
+        subNodes: content[label].map(item => ({ label: item })),
         handlePositions: getHandlePositions(index, totalNodes),
         index: index,
         totalNodes: totalNodes
       },
       type: 'biDirectional'
     };
-    nodes.push(mainNode);
-    const leafNodes = createLeafNodes(mainNode, content[label]);
-    nodes.push(...leafNodes);
     y += yScale;
+    return node;
   });
 
   const unconnectedNodes = content.unconnectedNodes.map((node, index) => ({
@@ -124,7 +125,7 @@ const createInitialNodes = (content) => {
 const createInitialEdges = (nodes) => {
   const connectedNodes = nodes.filter((node) => node.type === 'biDirectional');
   const totalNodes = connectedNodes.length;
-  let edges = connectedNodes.slice(0, -1).map((node, i) => {
+  return connectedNodes.slice(0, -1).map((node, i) => {
     const sourceHandle = getHandlePositions(i, totalNodes)[1];
     const targetHandle = getHandlePositions(i + 1, totalNodes)[0];
     return {
@@ -136,18 +137,6 @@ const createInitialEdges = (nodes) => {
       type: 'smoothstep',
     };
   });
-
-  const leafEdges = nodes.filter(node => node.id.includes('-')).map(node => ({
-    id: `e${node.id}`,
-    source: node.id.split('-')[0],
-    target: node.id,
-    sourceHandle: 'left',
-    targetHandle: 'left',
-    type: 'straight', // Subnode edges are straight
-    className: 'react-flow__edge-dashed' // Add the dashed line class
-  }));
-
-  return [...edges, ...leafEdges];
 };
 
 function App() {
@@ -180,6 +169,4 @@ function App() {
   );
 }
 
-const container = document.getElementById('root');
-const root = createRoot(container);
-root.render(<App />);
+ReactDOM.render(<App />, document.getElementById('root'));

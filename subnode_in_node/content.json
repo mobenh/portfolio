@@ -1,10 +1,10 @@
 {
   "languages": ["JavaScript", "Python", "Java"],
-  "projects": [],
-  "frameworks": [],
-  "infrastructure": [],
-  "certifications": [],
-  "contact": [],
+  "projects": ["Project A", "Project B", "Project C"],
+  "frameworks": ["React", "Angular", "Vue"],
+  "infrastructure": ["AWS", "Docker", "Kubernetes"],
+  "certifications": ["AWS Certified Developer", "MCSD", "CCNA"],
+  "contact": ["Email: example@email.com", "LinkedIn: /in/yourprofile"],
   "unconnectedNodes": [
     {
       "name": "Moben Haq",

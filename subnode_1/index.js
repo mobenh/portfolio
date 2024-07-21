@@ -42,8 +42,8 @@ const MemoizedBiDirectionalNode = memo(BiDirectionalNode);
 
 const SimpleNode = ({ data }) => (
   <div style={{ padding: 10, background: '#fff', border: '1px solid #ddd', transform: 'translateX(-50%)', maxWidth: '250px', wordWrap: 'break-word' }}>
-    <Handle type="source" position={Position.Left} id="a" />
-    <Handle type="target" position={Position.Left} id="b" />
+    <Handle type="source" position={Position.Top} id="a" />
+    <Handle type="target" position={Position.Bottom} id="b" />
     {data.label}
   </div>
 );
@@ -72,12 +72,12 @@ const getXPosition = (index, totalNodes) => {
 const createLeafNodes = (parentNode, leafLabels) => {
   return leafLabels.map((label, index) => ({
     id: `${parentNode.id}-${label}`,
-    position: { x: parentNode.position.x + 150, y: parentNode.position.y + (index * 60) }, // 150 for horizontal spacing, 60 for vertical stacking
+    position: { x: parentNode.position.x + (index + 1) * 100, y: parentNode.position.y + 50 },
     data: { label },
     type: 'simple',
     handlePosition: {
-      source: 'left',
-      target: 'left',
+      source: 'top',
+      target: 'bottom',
     }
   }));
 };
@@ -141,10 +141,9 @@ const createInitialEdges = (nodes) => {
     id: `e${node.id}`,
     source: node.id.split('-')[0],
     target: node.id,
-    sourceHandle: 'left',
-    targetHandle: 'left',
-    type: 'straight', // Subnode edges are straight
-    className: 'react-flow__edge-dashed' // Add the dashed line class
+    sourceHandle: 'a',
+    targetHandle: 'b',
+    type: 'smoothstep'
   }));
 
   return [...edges, ...leafEdges];
