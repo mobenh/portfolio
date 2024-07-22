@@ -59,8 +59,7 @@ const nodeTypes = {
   simple: MemoizedSimpleNode,
 };
 
-const getXPosition = (index, totalNodes) => {
-  const xMid = 500;
+const getXPosition = (index, totalNodes, xMid) => {
   if (index === 0 || index === totalNodes - 1) return xMid;
 
   const pattern = [xMid / 2, xMid * 3 / 4, xMid * 5 / 4, xMid * 3 / 2];
@@ -73,31 +72,52 @@ const getXPosition = (index, totalNodes) => {
   return fullPattern[posIndex];
 };
 
-const createLeafNodes = (parentNode, leafLabels) => {
-  return leafLabels.map((label, index) => ({
+const createLeafNodes = (parentNode, leafLabels, index, totalNodes, xMid) => {
+  const parentX = parentNode.position.x;
+  let direction;
+
+  if (index === 0 || index === totalNodes - 1) {
+    direction = index === 0 ? 1 : -1;  // First node right, last node left
+  } else {
+    const parentXRelativeToMid = parentX - xMid;
+    direction = parentXRelativeToMid <= 0 ? 1 : -1;  // Left of mid goes right, right of mid goes left
+  }
+
+  return leafLabels.map((label, idx) => ({
     id: `${parentNode.id}-${label}`,
-    position: { x: parentNode.position.x + 150, y: parentNode.position.y + (index * 60) }, // 150 for horizontal spacing, 60 for vertical stacking
-    data: { label: `${parentNode.id}-${label}` },
+    position: { 
+      x: parentNode.position.x + (150 * direction), 
+      y: parentNode.position.y + (idx * 60) - ((leafLabels.length - 1) * 30)
+    },
+    data: { label },
     type: 'simple',
-    handlePosition: {
-      source: 'left',
-      target: 'left',
-    }
   }));
 };
 
 const createInitialNodes = (content) => {
   const labels = Object.keys(content).filter(key => key !== 'unconnectedNodes');
   const totalNodes = labels.length;
-  const yScale = 100;
+  const yScale = 150;
   let y = yScale;
+  const xMid = 750; // Define xMid here
 
   const nodes = [];
+  let frameworksY = 0;
+
   labels.forEach((label, index) => {
-    const x = getXPosition(index, totalNodes);
-    if ((index + 1) % 3 === 1 && index > 0) {
-      y -= yScale;
+    let x = getXPosition(index, totalNodes, xMid);
+    
+    // Adjust y-position for Frameworks and Infrastructure
+    if (label === 'frameworks') {
+      frameworksY = y;
+      x = xMid - 150; // Position Frameworks slightly to the left
+    } else if (label === 'infrastructure') {
+      y = frameworksY; // Set Infrastructure to the same y as Frameworks
+      x = xMid + 150; // Position Infrastructure slightly to the right
+    } else if (index > 0) {
+      y += yScale;
     }
+
     const mainNode = {
       id: (index + 1).toString(),
       position: { x, y },
@@ -110,15 +130,18 @@ const createInitialNodes = (content) => {
       type: 'biDirectional'
     };
     nodes.push(mainNode);
-    const leafNodes = createLeafNodes(mainNode, content[label]);
+    const leafNodes = createLeafNodes(mainNode, content[label], index, totalNodes, xMid);
     nodes.push(...leafNodes);
-    y += yScale;
+
+    if (label !== 'infrastructure') {
+      y += yScale / 2;
+    }
   });
 
   const unconnectedNodes = content.unconnectedNodes.map((node, index) => ({
     id: `unconnected-${index + 1}`,
     position: node.position,
-    data: { label: node.name, unconnected: true },
+    data: { label: node.name },
     type: 'simple',
   }));
 
