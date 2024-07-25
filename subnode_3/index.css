@@ -1,0 +1,25 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+  }
+  
+  #root {
+    width: 100%;
+    height: 100vh;
+  }
+  
+  .react-flow__node-input {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .react-flow__node-default {
+    background-color: #2196F3;
+    color: white;
+  }
+  
+  .react-flow__edge-dashed {
+    stroke: #000;
+    stroke-dasharray: 5, 5;
+  }
+  

@@ -19,30 +19,21 @@ const getHandlePositions = (index, totalNodes) => {
 };
 
 const BiDirectionalNode = ({ data }) => {
-  const { index, totalNodes, label } = data;
+  const { index, totalNodes } = data;
   const positions = ['top', 'bottom', 'left', 'right'];
   const handlePositions = getHandlePositions(index, totalNodes);
 
   return (
     <div style={{ padding: 10, background: '#fff', border: '1px solid #ddd', transform: 'translateX(-50%)' }}>
-      {positions
-        .filter(pos => handlePositions.includes(pos))
-        .map(pos => (
+      {positions.map((pos) =>
+        handlePositions.includes(pos) && (
           <React.Fragment key={pos}>
-            <Handle 
-              type="source" 
-              position={Position[pos.charAt(0).toUpperCase() + pos.slice(1)]} 
-              id={`${pos}-source-${index}`} 
-            />
-            <Handle 
-              type="target" 
-              position={Position[pos.charAt(0).toUpperCase() + pos.slice(1)]} 
-              id={`${pos}-target-${index}`} 
-            />
+            <Handle type="source" position={Position[pos.charAt(0).toUpperCase() + pos.slice(1)]} id={`${pos}-source-${index}`} />
+            <Handle type="target" position={Position[pos.charAt(0).toUpperCase() + pos.slice(1)]} id={`${pos}-target-${index}`} />
           </React.Fragment>
-        ))
-      }
-      {label}
+        )
+      )}
+      {data.label}
     </div>
   );
 };
@@ -81,78 +72,82 @@ const getXPosition = (index, totalNodes, xMid) => {
   return fullPattern[posIndex];
 };
 
-const createLeafNode = (mainNode, leafLabel, index, direction) => ({
-  id: `${mainNode.id}-${leafLabel}`,
-  position: { 
-    x: mainNode.position.x + (150 * direction), 
-    y: mainNode.position.y + (index * 60) - ((mainNode.data.leafLabels.length - 1) * 30)
-  },
-  data: { label: leafLabel },
-  type: 'simple',
-});
+const createLeafNodes = (parentNode, leafLabels, index, totalNodes, xMid) => {
+  const parentX = parentNode.position.x;
+  let direction;
 
-const createMainNode = (label, index, totalNodes, x, y, leafLabels) => ({
-  id: (index + 1).toString(),
-  position: { x, y },
-  data: {
-    label: label.charAt(0).toUpperCase() + label.slice(1),
-    handlePositions: getHandlePositions(index, totalNodes),
-    index: index,
-    totalNodes: totalNodes,
-    leafLabels: leafLabels
-  },
-  type: 'biDirectional'
-});
+  if (index === 0 || index === totalNodes - 1) {
+    direction = index === 0 ? 1 : -1;  // First node right, last node left
+  } else {
+    const parentXRelativeToMid = parentX - xMid;
+    direction = parentXRelativeToMid <= 0 ? 1 : -1;  // Left of mid goes right, right of mid goes left
+  }
 
-const createUnconnectedNode = (node, index) => ({
-  id: `unconnected-${index + 1}`,
-  position: node.position,
-  data: { label: node.name },
-  type: 'simple',
-});
+  return leafLabels.map((label, idx) => ({
+    id: `${parentNode.id}-${label}`,
+    position: { 
+      x: parentNode.position.x + (150 * direction), 
+      y: parentNode.position.y + (idx * 60) - ((leafLabels.length - 1) * 30)
+    },
+    data: { label },
+    type: 'simple',
+  }));
+};
 
 const createInitialNodes = (content) => {
-  const { unconnectedNodes, ...connectedContent } = content;
-  const labels = Object.keys(connectedContent);
+  const labels = Object.keys(content).filter(key => key !== 'unconnectedNodes');
   const totalNodes = labels.length;
   const yScale = 150;
-  const xMid = 750;
-
   let y = yScale;
+  const xMid = 750; // Define xMid here
+
+  const nodes = [];
   let frameworksY = 0;
 
-  const nodes = labels.flatMap((label, index) => {
+  labels.forEach((label, index) => {
     let x = getXPosition(index, totalNodes, xMid);
     
+    // Adjust y-position for Frameworks and Infrastructure
     if (label === 'frameworks') {
       frameworksY = y;
-      x = xMid - 150;
+      x = xMid - 150; // Position Frameworks slightly to the left
     } else if (label === 'infrastructure') {
-      y = frameworksY;
-      x = xMid + 150;
+      y = frameworksY; // Set Infrastructure to the same y as Frameworks
+      x = xMid + 150; // Position Infrastructure slightly to the right
     } else if (index > 0) {
       y += yScale;
     }
 
-    const leafLabels = connectedContent[label];
-    const mainNode = createMainNode(label, index, totalNodes, x, y, leafLabels);
-    
-    const direction = (index === 0 || (index !== totalNodes - 1 && x <= xMid)) ? 1 : -1;
-    const leafNodes = leafLabels.map((leafLabel, idx) => 
-      createLeafNode(mainNode, leafLabel, idx, direction)
-    );
+    const mainNode = {
+      id: (index + 1).toString(),
+      position: { x, y },
+      data: {
+        label: label.charAt(0).toUpperCase() + label.slice(1),
+        handlePositions: getHandlePositions(index, totalNodes),
+        index: index,
+        totalNodes: totalNodes
+      },
+      type: 'biDirectional'
+    };
+    nodes.push(mainNode);
+    const leafNodes = createLeafNodes(mainNode, content[label], index, totalNodes, xMid);
+    nodes.push(...leafNodes);
 
     if (label !== 'infrastructure') {
       y += yScale / 2;
     }
-
-    return [mainNode, ...leafNodes];
   });
 
-  const unconnectedNodeObjects = unconnectedNodes.map(createUnconnectedNode);
+  const unconnectedNodes = content.unconnectedNodes.map((node, index) => ({
+    id: `unconnected-${index + 1}`,
+    position: node.position,
+    data: { label: node.name },
+    type: 'simple',
+  }));
 
-  return [...nodes, ...unconnectedNodeObjects];
+  return [...nodes, ...unconnectedNodes];
 };
+
 const createInitialEdges = (nodes) => {
   const connectedNodes = nodes.filter((node) => node.type === 'biDirectional');
   const totalNodes = connectedNodes.length;
