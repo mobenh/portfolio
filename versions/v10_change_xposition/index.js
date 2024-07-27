@@ -106,14 +106,13 @@ const getNodePosition = (index, totalNodes, xMid, yScale) => {
     { x: xMid - 150, y: yScale * 2 }, // Frameworks
     { x: xMid + 150, y: yScale * 2 }, // Infrastructure
     { x: xMid + 300, y: yScale * 3 }, // Certifications
-    { x: xMid - 150, y: yScale * 4 }, // Contact
-    { x: xMid + 150, y: yScale * 4 }, // Add1
+    { x: xMid + 150, y: yScale * 4 }, // Contact
+    { x: xMid - 150, y: yScale * 4 }, // Add1
     { x: xMid - 300, y: yScale * 5 }, // Add2
     { x: xMid - 150, y: yScale * 6 }, // Add3
     { x: xMid + 150, y: yScale * 6 }, // Add4
     { x: xMid + 300, y: yScale * 7 }, // Add5
-    { x: xMid + 150, y: yScale * 8 },// Add6
-    { x: xMid - 150, y: yScale * 8 } // Add7
+    { x: xMid, y: yScale * 8 }, // Add6
   ];
 
   // Handle case where there are fewer nodes than positions
