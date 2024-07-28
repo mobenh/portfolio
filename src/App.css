@@ -69,13 +69,13 @@
     stroke-width: 2;
 }
 
-.node-circle {
+.node {
+    transition: transform 0.3s ease;
     cursor: pointer;
-    transition: all 0.3s ease;
 }
 
-.node-circle:hover {
-    transform: scale(1.1);
+.node:hover {
+    transform: translateY(-10px);
 }
 
 .node-details {

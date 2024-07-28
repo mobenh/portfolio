@@ -101,18 +101,18 @@ const createUnconnectedNode = (node, index) => ({
 
 const getNodePosition = (index, totalNodes, xMid, yScale) => {
   const positions = [
-    { x: xMid, y: 0 },                // Languages
-    { x: xMid - 300, y: yScale },     // Projects
-    { x: xMid - 150, y: yScale * 2 }, // Frameworks
-    { x: xMid + 150, y: yScale * 2 }, // Infrastructure
-    { x: xMid + 300, y: yScale * 3 }, // Certifications
-    { x: xMid + 150, y: yScale * 4 }, // Contact
-    { x: xMid - 150, y: yScale * 4 }, // Add1
-    { x: xMid - 300, y: yScale * 5 }, // Add2
-    { x: xMid - 150, y: yScale * 6 }, // Add3
-    { x: xMid + 150, y: yScale * 6 }, // Add4
-    { x: xMid + 300, y: yScale * 7 }, // Add5
-    { x: xMid, y: yScale * 8 }, // Add6
+    { x: xMid, y: 0 },                // first position
+    { x: xMid - 300, y: yScale },     // position2
+    { x: xMid - 150, y: yScale * 2 }, // position3
+    { x: xMid + 150, y: yScale * 2 }, // position4
+    { x: xMid + 300, y: yScale * 3 }, // position5
+    { x: xMid + 150, y: yScale * 4 }, // position6
+    { x: xMid - 150, y: yScale * 4 }, // position7
+    { x: xMid - 300, y: yScale * 5 }, // position8
+    { x: xMid - 150, y: yScale * 6 }, // position9
+    { x: xMid + 150, y: yScale * 6 }, // position10
+    { x: xMid + 300, y: yScale * 7 }, // position11
+    { x: xMid, y: yScale * 8 }, // last position
   ];
 
   // Handle case where there are fewer nodes than positions

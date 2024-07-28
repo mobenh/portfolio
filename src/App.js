@@ -73,7 +73,7 @@ const AnimatedLine = ({ start, end, index }) => {
 };
 
 const Node = ({ x, y, color, label, onClick }) => (
-  <g onClick={onClick}>
+  <g onClick={onClick} className="node">
     <circle cx={x} cy={y} r="40" fill={color} className="node-circle" />
     <text x={x} y={y} dy=".3em" textAnchor="middle" fill="white" fontSize="16" fontWeight="bold">
       {label}
