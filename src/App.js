@@ -1,32 +1,36 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const App = () => {
-  const [nodeCount, setNodeCount] = useState(24);
-  const [nodes, setNodes] = useState([]);
+  const [nodeCount, setNodeCount] = useState(6);
+
+  // Define constants
+  const INITIAL_Y = 30;
+  const MID_X = 400;
+  const Y_INCREMENT = MID_X / 4;
+  const X_PATTERN = [MID_X * (1 - .5), MID_X * (1 - .25), MID_X * (1 + .25), MID_X * (1 + .5)];
 
   const generateCoordinates = (count) => {
-    const coordinates = [{ id: 'First', x: 400, y: 30 }];
-    const xPattern = [200, 300, 500, 600];
-    let currentY = 30;
+    const coordinates = [{ id: 'First', x: MID_X, y: INITIAL_Y }];
+    let currentY = INITIAL_Y;
     let patternIndex = 0;
     let ascending = true;
 
     for (let i = 1; i < count - 1; i++) {
       let prevX = coordinates[coordinates.length - 1].x;
-      let nextX = xPattern[patternIndex];
+      let nextX = X_PATTERN[patternIndex];
 
-      if ((prevX === 300 && nextX === 500) || (prevX === 500 && nextX === 300)) {
+      if ((prevX === MID_X * (1 - .25) && nextX === MID_X * (1 + .25)) || (prevX === MID_X * (1 + .25) && nextX === MID_X * (1 - .25))) {
         // Y doesn't increment in these cases
       } else {
-        currentY += 50;
+        currentY += Y_INCREMENT;
       }
 
       coordinates.push({ id: `Node ${i}`, x: nextX, y: currentY });
 
       if (ascending) {
         patternIndex++;
-        if (patternIndex >= xPattern.length) {
-          patternIndex = xPattern.length - 2;
+        if (patternIndex >= X_PATTERN.length) {
+          patternIndex = X_PATTERN.length - 2;
           ascending = false;
         }
       } else {
@@ -38,23 +42,19 @@ const App = () => {
       }
     }
 
-    coordinates.push({ id: 'Last', x: 400, y: currentY + 50 });
+    coordinates.push({ id: 'Last', x: MID_X, y: currentY + Y_INCREMENT });
 
     return coordinates;
   };
 
-  useEffect(() => {
-    setNodes(generateCoordinates(nodeCount));
-  }, [nodeCount]);
-
-  const height = Math.max(300, nodes.length > 0 ? nodes[nodes.length - 1].y + 50 : 300);
+  const nodes = generateCoordinates(nodeCount);
+  const height = nodes.length > 0 ? nodes[nodes.length - 1].y + Y_INCREMENT : 0;
 
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
       height: '100vh',
-      padding: '1rem',
       fontFamily: 'Arial, sans-serif'
     }}>
       <div style={{ marginBottom: '1rem' }}>
