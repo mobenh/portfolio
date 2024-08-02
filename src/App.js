@@ -13,6 +13,8 @@ const content = {
 const App = () => {
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [nodes, setNodes] = useState([]);
+  const TOP_PADDING = 60;
+  const VERTICAL_LINE_LENGTH = 60;
 
   useEffect(() => {
     const handleResize = () => setScreenWidth(window.innerWidth);
@@ -21,7 +23,7 @@ const App = () => {
   }, []);
 
   const generateCoordinates = useCallback(() => {
-    const INITIAL_Y = 30;
+    const INITIAL_Y = TOP_PADDING + VERTICAL_LINE_LENGTH;
     const MID_X = screenWidth / 2;
     const Y_INCREMENT = screenWidth / 8;
     const X_PATTERN = [0.25, 0.75, 1.25, 1.75];
@@ -94,17 +96,17 @@ const App = () => {
     const radius = 50;
 
     if (index === 0) {
-      // First node: bottom right quadrant (quad 4)
-      const angleStep = (Math.PI / 2) / (leafCount + 1);
+      // First node: right side (quad 1 & 4)
+      const angleStep = Math.PI / (leafCount + 1);
       for (let i = 0; i < leafCount; i++) {
-        const angle = angleStep * (i + 1);
+        const angle = -Math.PI / 2 + angleStep * (i + 1);
         const x = node.x + radius * Math.cos(angle);
         const y = node.y + radius * Math.sin(angle);
         leafNodes.push({ id: content[node.id][i], x, y });
       }
     } else if (index === totalNodes - 1) {
-      // Last node: bottom left quadrant (quad 3)
-      const angleStep = (Math.PI / 2) / (leafCount + 1);
+      // Last node: left side (quad 2 & 3)
+      const angleStep = Math.PI / (leafCount + 1);
       for (let i = 0; i < leafCount; i++) {
         const angle = Math.PI / 2 + angleStep * (i + 1);
         const x = node.x + radius * Math.cos(angle);
@@ -216,9 +218,33 @@ const App = () => {
   return (
     <div>
       <svg
-        viewBox={`0 0 ${screenWidth} ${nodes.length > 0 ? nodes[nodes.length - 1].y + 60 : 0}`}
+        viewBox={`0 0 ${screenWidth} ${nodes.length > 0 ? nodes[nodes.length - 1].y + VERTICAL_LINE_LENGTH : 0}`}
       >
+        {/* Starting vertical line */}
+        {nodes.length > 0 && (
+          <line
+            x1={nodes[0].x}
+            y1={TOP_PADDING}
+            x2={nodes[0].x}
+            y2={nodes[0].y}
+            stroke="gray"
+            strokeWidth="1"
+          />
+        )}
+
         {nodes.map((node, index) => renderNode(node, index))}
+
+        {/* Ending vertical line */}
+        {nodes.length > 0 && (
+          <line
+            x1={nodes[nodes.length - 1].x}
+            y1={nodes[nodes.length - 1].y}
+            x2={nodes[nodes.length - 1].x}
+            y2={nodes[nodes.length - 1].y + VERTICAL_LINE_LENGTH}
+            stroke="gray"
+            strokeWidth="1"
+          />
+        )}
       </svg>
     </div>
   );
