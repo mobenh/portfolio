@@ -1,38 +1,48 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Leaf } from 'lucide-react';
 
+const content = {
+  First: ['leaf1', 'leaf2'],
+  Node1: ['leaf1'],
+  Node2: ['leaf1'],
+  Node3: ['leaf1', 'leaf2'],
+  Node4: ['leaf1'],
+  Last: ['leaf1', 'leaf2', 'leaf3'],
+};
+
 const App = () => {
-  const [nodeCount, setNodeCount] = useState(8);
+  const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [nodes, setNodes] = useState([]);
 
-  // Define constants
-  const SCREEN_WIDTH = 800;
-  const INITIAL_Y = 30;
-  const MID_X = SCREEN_WIDTH / 2;
-  const Y_INCREMENT = MID_X / 4;
-  const X_PATTERN = [MID_X * (1 - .75), MID_X * (1 - .25), MID_X * (1 + .25), MID_X * (1 + .75)];
-
   useEffect(() => {
-    setNodes(generateCoordinates(nodeCount));
-  }, [nodeCount]);
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const generateCoordinates = (count) => {
-    const coordinates = [{ id: 'First', x: MID_X, y: INITIAL_Y }];
+  const generateCoordinates = useCallback(() => {
+    const INITIAL_Y = 30;
+    const MID_X = screenWidth / 2;
+    const Y_INCREMENT = screenWidth / 8;
+    const X_PATTERN = [0.25, 0.75, 1.25, 1.75];
+
+    const nodeIds = Object.keys(content);
+    const coordinates = [{ id: nodeIds[0], x: MID_X, y: INITIAL_Y }];
     let currentY = INITIAL_Y;
     let patternIndex = 0;
     let ascending = true;
 
-    for (let i = 1; i < count - 1; i++) {
+    for (let i = 1; i < nodeIds.length - 1; i++) {
       let prevX = coordinates[coordinates.length - 1].x;
-      let nextX = X_PATTERN[patternIndex];
+      let nextX = MID_X * X_PATTERN[patternIndex];
 
-      if ((prevX === MID_X * (1 - .25) && nextX === MID_X * (1 + .25)) || (prevX === MID_X * (1 + .25) && nextX === MID_X * (1 - .25))) {
+      if ((prevX === MID_X * 0.75 && nextX === MID_X * 1.25) || (prevX === MID_X * 1.25 && nextX === MID_X * 0.75)) {
         // Y doesn't increment in these cases
       } else {
         currentY += Y_INCREMENT;
       }
 
-      coordinates.push({ id: `Node ${i}`, x: nextX, y: currentY });
+      coordinates.push({ id: nodeIds[i], x: nextX, y: currentY });
 
       if (ascending) {
         patternIndex++;
@@ -49,10 +59,14 @@ const App = () => {
       }
     }
 
-    coordinates.push({ id: 'Last', x: MID_X, y: currentY + Y_INCREMENT });
+    coordinates.push({ id: nodeIds[nodeIds.length - 1], x: MID_X, y: currentY + Y_INCREMENT });
 
     return coordinates;
-  };
+  }, [screenWidth]);
+
+  useEffect(() => {
+    setNodes(generateCoordinates());
+  }, [generateCoordinates]);
 
   const generatePatternedOrthogonalPath = (start, end, index, totalNodes) => {
     if (index === 0) {
@@ -75,7 +89,7 @@ const App = () => {
   };
 
   const generateLeafNodes = (node, index, totalNodes) => {
-    const leafCount = Math.floor(Math.random() * 3) + 1;
+    const leafCount = content[node.id].length;
     const leafNodes = [];
     const radius = 50;
 
@@ -86,7 +100,7 @@ const App = () => {
         const angle = angleStep * (i + 1);
         const x = node.x + radius * Math.cos(angle);
         const y = node.y + radius * Math.sin(angle);
-        leafNodes.push({ id: `${node.id}-Leaf-${i + 1}`, x, y });
+        leafNodes.push({ id: content[node.id][i], x, y });
       }
     } else if (index === totalNodes - 1) {
       // Last node: bottom left quadrant (quad 3)
@@ -95,7 +109,7 @@ const App = () => {
         const angle = Math.PI / 2 + angleStep * (i + 1);
         const x = node.x + radius * Math.cos(angle);
         const y = node.y + radius * Math.sin(angle);
-        leafNodes.push({ id: `${node.id}-Leaf-${i + 1}`, x, y });
+        leafNodes.push({ id: content[node.id][i], x, y });
       }
     } else {
       // Intermediate nodes
@@ -127,6 +141,9 @@ const App = () => {
           startAngle = -Math.PI;
           endAngle = 0;
           break;
+        default:
+          startAngle = 0;
+          endAngle = 2 * Math.PI;
       }
 
       const angleStep = (endAngle - startAngle) / (leafCount + 1);
@@ -134,7 +151,7 @@ const App = () => {
         const angle = startAngle + angleStep * (i + 1);
         const x = node.x + radius * Math.cos(angle);
         const y = node.y + radius * Math.sin(angle);
-        leafNodes.push({ id: `${node.id}-Leaf-${i + 1}`, x, y });
+        leafNodes.push({ id: content[node.id][i], x, y });
       }
     }
 
@@ -182,50 +199,27 @@ const App = () => {
             size={24}
             color="green"
           />
+          <text
+            x={leaf.x + 10}
+            y={leaf.y}
+            fontSize="10"
+            fill="green"
+            dominantBaseline="middle"
+          >
+            {leaf.id}
+          </text>
         </React.Fragment>
       ))}
     </React.Fragment>
   );
 
   return (
-    <div className="p-4">
-      <div className="mb-4">
-        <label htmlFor="nodeCount" className="mr-2">Number of Nodes:</label>
-        <input
-          id="nodeCount"
-          type="number"
-          min="3"
-          max="100"
-          value={nodeCount}
-          onChange={(e) => setNodeCount(Math.max(3, Math.min(100, parseInt(e.target.value) || 3)))}
-          className="border border-gray-300 rounded px-2 py-1"
-        />
-      </div>
-      <div className="border border-gray-300 rounded">
-        <svg
-          viewBox={`0 0 ${SCREEN_WIDTH} ${nodes.length > 0 ? nodes[nodes.length - 1].y + 60 : 0}`}
-          className="w-full h-auto"
-        >
-          {nodes.map((node, index) => renderNode(node, index))}
-        </svg>
-      </div>
-      <div className="mt-4">
-        <h2 className="text-lg font-semibold mb-2">Node Positions</h2>
-        <ul className="list-disc pl-5">
-          {nodes.map((node, index) => (
-            <li key={index} className="mb-2">
-              {node.id}: x={node.x.toFixed(2)}, y={node.y.toFixed(2)}
-              <ul className="list-circle pl-5 mt-1">
-                {generateLeafNodes(node, index, nodes.length).map((leaf, leafIndex) => (
-                  <li key={leafIndex}>
-                    {leaf.id}: x={leaf.x.toFixed(2)}, y={leaf.y.toFixed(2)}
-                  </li>
-                ))}
-              </ul>
-            </li>
-          ))}
-        </ul>
-      </div>
+    <div>
+      <svg
+        viewBox={`0 0 ${screenWidth} ${nodes.length > 0 ? nodes[nodes.length - 1].y + 60 : 0}`}
+      >
+        {nodes.map((node, index) => renderNode(node, index))}
+      </svg>
     </div>
   );
 };
