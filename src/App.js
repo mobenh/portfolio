@@ -18,6 +18,8 @@ const App = () => {
   const NODE_WIDTH = 80;
   const NODE_HEIGHT = 25;
   const LEAF_CONNECTION_LENGTH = 90;
+  const LEAF_WIDTH = 60;
+  const LEAF_HEIGHT = 20;
 
   const generateCoordinates = useCallback(() => {
     const INITIAL_Y = TOP_PADDING + VERTICAL_LINE_LENGTH;
@@ -102,32 +104,24 @@ const App = () => {
   const generateLeafNodes = (node, index, totalNodes) => {
     const leafCount = content[node.id].length;
     const leafNodes = [];
-
+  
+    let startAngle, endAngle, stemOriginX, stemOriginY;
+  
     if (index === 0) {
       // First node: right edge of rectangle
-      const angleStep = Math.PI / (leafCount + 1);
-      const stemOriginX = node.x + NODE_WIDTH / 2;
-      for (let i = 0; i < leafCount; i++) {
-        const angle = -Math.PI / 2 + angleStep * (i + 1);
-        const x = stemOriginX + LEAF_CONNECTION_LENGTH * Math.cos(angle);
-        const y = node.y + LEAF_CONNECTION_LENGTH * Math.sin(angle);
-        leafNodes.push({ id: content[node.id][i], x, y });
-      }
+      startAngle = -Math.PI / 2;
+      endAngle = Math.PI / 2;
+      stemOriginX = node.x + NODE_WIDTH / 2;
+      stemOriginY = node.y;
     } else if (index === totalNodes - 1) {
       // Last node: left side (quad 2 & 3)
-      const angleStep = Math.PI / (leafCount + 1);
-      const stemOriginX = node.x - NODE_WIDTH / 2;
-      for (let i = 0; i < leafCount; i++) {
-        const angle = Math.PI / 2 + angleStep * (i + 1);
-        const x = stemOriginX + LEAF_CONNECTION_LENGTH * Math.cos(angle);
-        const y = node.y + LEAF_CONNECTION_LENGTH * Math.sin(angle);
-        leafNodes.push({ id: content[node.id][i], x, y });
-      }
+      startAngle = Math.PI / 2;
+      endAngle = 3 * Math.PI / 2;
+      stemOriginX = node.x - NODE_WIDTH / 2;
+      stemOriginY = node.y;
     } else {
       // Intermediate nodes
       const patternIndex = (index - 1) % 6;
-      let startAngle, endAngle, stemOriginX, stemOriginY;
-
       switch (patternIndex) {
         case 0: // Right (quad 1&4)
           startAngle = -Math.PI / 2;
@@ -155,23 +149,32 @@ const App = () => {
           stemOriginX = node.x - NODE_WIDTH / 2;
           stemOriginY = node.y;
           break;
-        default:
-          startAngle = 0;
-          endAngle = 2 * Math.PI;
-          stemOriginX = node.x;
+        default: // Default to right side (same as case 0)
+          startAngle = -Math.PI / 2;
+          endAngle = Math.PI / 2;
+          stemOriginX = node.x + NODE_WIDTH / 2;
           stemOriginY = node.y;
-      }
-
-      const angleStep = (endAngle - startAngle) / (leafCount + 1);
-      for (let i = 0; i < leafCount; i++) {
-        const angle = startAngle + angleStep * (i + 1);
-        const x = stemOriginX + LEAF_CONNECTION_LENGTH * Math.cos(angle);
-        const y = stemOriginY + LEAF_CONNECTION_LENGTH * Math.sin(angle);
-        leafNodes.push({ id: content[node.id][i], x, y });
+          break;
       }
     }
-
+  
+    const angleStep = (endAngle - startAngle) / (leafCount + 1);
+    for (let i = 0; i < leafCount; i++) {
+      const angle = startAngle + angleStep * (i + 1);
+      const x = stemOriginX + LEAF_CONNECTION_LENGTH * Math.cos(angle);
+      const y = stemOriginY + LEAF_CONNECTION_LENGTH * Math.sin(angle);
+      leafNodes.push({ id: content[node.id][i], x, y });
+    }
+  
     return leafNodes;
+  };
+
+  const generateCurvedPath = (start, end) => {
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+    const controlX = midX + (end.y - start.y) / 4;
+    const controlY = midY - (end.x - start.x) / 4;
+    return `M ${start.x} ${start.y} Q ${controlX} ${controlY} ${end.x} ${end.y}`;
   };
 
   const renderConnectingLines = () => (
@@ -228,14 +231,16 @@ const App = () => {
             }
 
             return (
-              <line
+              <path
                 key={`leaf-line-${leaf.id}`}
-                x1={lineStartX}
-                y1={lineStartY}
-                x2={leaf.x}
-                y2={leaf.y}
+                d={generateCurvedPath(
+                  { x: lineStartX, y: lineStartY },
+                  { x: leaf.x, y: leaf.y }
+                )}
                 stroke="green"
                 strokeWidth="1"
+                fill="none"
+                strokeDasharray="5,5"
               />
             );
           })}
@@ -281,6 +286,17 @@ const App = () => {
           </text>
           {generateLeafNodes(node, index, nodes.length).map((leaf) => (
             <React.Fragment key={`leaf-${leaf.id}`}>
+              <rect
+                x={leaf.x - LEAF_WIDTH / 2}
+                y={leaf.y - LEAF_HEIGHT / 2}
+                width={LEAF_WIDTH}
+                height={LEAF_HEIGHT}
+                fill="white"
+                stroke="green"
+                strokeWidth="1"
+                rx="5"
+                ry="5"
+              />
               <text
                 x={leaf.x}
                 y={leaf.y}
