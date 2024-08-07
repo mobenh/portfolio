@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 
 const content = {
   First: ['leaf1', 'leaf2'],
@@ -12,7 +13,10 @@ const content = {
 const App = () => {
   const [screenWidth, setScreenWidth] = useState(window.innerWidth);
   const [nodes, setNodes] = useState([]);
-  const [isFirstNodeHovered, setIsFirstNodeHovered] = useState(false);
+  const [visibleSegments, setVisibleSegments] = useState(0);
+  const [animationComplete, setAnimationComplete] = useState(false);
+  const totalSegments = 100;
+  const animationDuration = 7000; // 5 seconds for full animation
   const TOP_PADDING = 50;
   const BOTTOM_PADDING = 50;
   const VERTICAL_LINE_LENGTH = 80;
@@ -78,9 +82,29 @@ const App = () => {
     // Add event listener
     window.addEventListener('resize', handleResize);
 
+    // Animation setup - only runs once when the component mounts
+    if (!animationComplete) {
+      let start;
+      const step = (timestamp) => {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        const newVisibleSegments = Math.min(Math.floor((progress / animationDuration) * totalSegments), totalSegments);
+        setVisibleSegments(newVisibleSegments);
+
+        if (progress < animationDuration) {
+          requestAnimationFrame(step);
+        } else {
+          setAnimationComplete(true);
+          setVisibleSegments(totalSegments); // Ensure all segments are visible when animation completes
+        }
+      };
+
+      requestAnimationFrame(step);
+    }
+
     // Cleanup function
     return () => window.removeEventListener('resize', handleResize);
-  }, [generateCoordinates]);
+  }, [generateCoordinates, animationComplete]);
 
   const generatePatternedOrthogonalPath = (start, end, index, totalNodes) => {
     if (index === 0) {
@@ -178,28 +202,50 @@ const App = () => {
     return `M ${start.x} ${start.y} Q ${controlX} ${controlY} ${end.x} ${end.y}`;
   };
 
+  const generateDashArray = (pathLength) => {
+    const segmentLength = pathLength / totalSegments;
+    if (animationComplete) {
+      // Return a complete dashed line when animation is finished
+      return Array(totalSegments).fill(`${segmentLength},${segmentLength}`).join(' ');
+    }
+    return Array(totalSegments)
+      .fill(null)
+      .map((_, index) =>
+        index < visibleSegments
+          ? `${segmentLength},${segmentLength}`
+          : `0,${segmentLength * 2}`
+      )
+      .join(' ');
+  };
+
   const renderConnectingLines = () => (
     <>
       {/* Starting vertical line */}
       {nodes.length > 0 && (
-        <line
+        <motion.line
           x1={nodes[0].x}
           y1={TOP_PADDING}
           x2={nodes[0].x}
           y2={nodes[0].y}
           stroke="gray"
           strokeWidth="1"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1 }}
         />
       )}
 
       {nodes.map((node, index, nodesArray) => (
         <React.Fragment key={`line-${node.id}`}>
           {index < nodes.length - 1 && (
-            <path
+            <motion.path
               d={generatePatternedOrthogonalPath(node, nodes[index + 1], index, nodes.length)}
               fill="none"
               stroke="gray"
               strokeWidth="1"
+              initial={{ pathLength: 0 }}
+              animate={{ pathLength: 1 }}
+              transition={{ duration: 1, delay: index * 0.2 }}
             />
           )}
           {generateLeafNodes(node, index, nodesArray.length).map((leaf) => {
@@ -241,21 +287,8 @@ const App = () => {
                 stroke="green"
                 strokeWidth="1"
                 fill="none"
-                strokeDasharray="5,5"
-                className={index === 0 ? "animated-path" : ""}
-              >
-                {index === 0 && (
-                  <animate
-                    attributeName="stroke-dashoffset"
-                    from="10"
-                    to="0"
-                    dur="1s"
-                    repeatCount="indefinite"
-                    begin={isFirstNodeHovered ? "0s" : "indefinite"}
-                    end={isFirstNodeHovered ? "indefinite" : "0s"}
-                  />
-                )}
-              </path>
+                strokeDasharray={generateDashArray(200)} // Approximate path length for leaf connections
+              />
             );
           })}
         </React.Fragment>
@@ -263,13 +296,16 @@ const App = () => {
 
       {/* Ending vertical line */}
       {nodes.length > 0 && (
-        <line
+        <motion.line
           x1={nodes[nodes.length - 1].x}
           y1={nodes[nodes.length - 1].y}
           x2={nodes[nodes.length - 1].x}
           y2={nodes[nodes.length - 1].y + VERTICAL_LINE_LENGTH}
           stroke="gray"
           strokeWidth="1"
+          initial={{ pathLength: 0 }}
+          animate={{ pathLength: 1 }}
+          transition={{ duration: 1, delay: (nodes.length - 1) * 0.2 }}
         />
       )}
     </>
@@ -279,7 +315,7 @@ const App = () => {
     <>
       {nodes.map((node, index) => (
         <React.Fragment key={`node-${node.id}`}>
-          <rect
+          <motion.rect
             x={node.x - NODE_WIDTH / 2}
             y={node.y - NODE_HEIGHT / 2}
             width={NODE_WIDTH}
@@ -287,22 +323,26 @@ const App = () => {
             fill="white"
             stroke="blue"
             strokeWidth="2"
-            onMouseEnter={() => index === 0 && setIsFirstNodeHovered(true)}
-            onMouseLeave={() => index === 0 && setIsFirstNodeHovered(false)}
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
           />
-          <text
+          <motion.text
             x={node.x}
             y={node.y}
             fontSize="12"
             fill="black"
             textAnchor="middle"
             dominantBaseline="middle"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: index * 0.1 + 0.25 }}
           >
             {node.id}
-          </text>
+          </motion.text>
           {generateLeafNodes(node, index, nodes.length).map((leaf) => (
             <React.Fragment key={`leaf-${leaf.id}`}>
-              <rect
+              <motion.rect
                 x={leaf.x - LEAF_WIDTH / 2}
                 y={leaf.y - LEAF_HEIGHT / 2}
                 width={LEAF_WIDTH}
@@ -312,17 +352,23 @@ const App = () => {
                 strokeWidth="1"
                 rx="5"
                 ry="5"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 + 0.5 }}
               />
-              <text
+              <motion.text
                 x={leaf.x}
                 y={leaf.y}
                 fontSize="10"
                 fill="green"
                 textAnchor="middle"
                 dominantBaseline="middle"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: index * 0.1 + 0.75 }}
               >
                 {leaf.id}
-              </text>
+              </motion.text>
             </React.Fragment>
           ))}
         </React.Fragment>
