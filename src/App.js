@@ -7,38 +7,30 @@ const styles = {
   header: {
     color: 'black',
     textAlign: 'center',
-    padding: '1rem',
-    backgroundColor: 'rgba(255, 255, 255, 0.8)',
-    position: 'sticky',
-    top: 0,
-    zIndex: 2,
   },
   headerTitle: {
     fontSize: '1.5rem',
     fontWeight: 'bold',
   },
   canvasContainer: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
+    height: '500vh',
     width: '100vw',
-    height: '100vh',
-    zIndex: 0,
+    overflow: 'hidden',  // Hide overflow to prevent scrollbars if needed
+    display: 'flex',    // Center the canvas horizontally and vertically
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  scrollContainer: {
-    height: '700vh', // Adjust this value to control scroll length
-    position: 'relative',
-    zIndex: 1,
+  canvasWrapper: {
+    position: 'fixed',
+    height: '30vh',
+    top: '30px',
+    left: 0,
+    width: '50vw',
   },
   footer: {
-    backgroundColor: 'rgba(229, 231, 235, 0.8)',
+    backgroundColor: '#e5e7eb',
     padding: '1rem',
     textAlign: 'center',
-    position: 'fixed',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    zIndex: 2,
   },
 };
 
@@ -112,43 +104,33 @@ function Road({ pathPoints }) {
 }
 
 function App() {
-  const [scrollPosition, setScrollPosition] = useState(0);
   const pathPoints = [
-    new THREE.Vector3(0, 0, -15),  
-    new THREE.Vector3(0, 0, -10),  
-    new THREE.Vector3(-10, 0, -10),
-    new THREE.Vector3(-10, 0, 0), 
-    new THREE.Vector3(10, 0, 0),  
-    new THREE.Vector3(10, 0, 10),   
-    new THREE.Vector3(0, 0, 10),    
-    new THREE.Vector3(0, 0, 15),    
+    new THREE.Vector3(0, 0, 0),    // Start
+    new THREE.Vector3(0, 0, 5),    // Move north
+    new THREE.Vector3(5, 0, 5),    // Move east
+    new THREE.Vector3(5, 0, 10),   // Move north
+    new THREE.Vector3(10, 0, 10),  // Move east
+    new THREE.Vector3(10, 0, 5),   // Move south
+    new THREE.Vector3(5, 0, 5),    // Move west
+    new THREE.Vector3(5, 0, 0),    // Move south
+    new THREE.Vector3(10, 0, 0)    // Move east to end
   ];
-
-  useEffect(() => {
-    const handleScroll = () => {
-      const scrollPercentage = window.scrollY / (document.documentElement.scrollHeight - window.innerHeight);
-      setScrollPosition(scrollPercentage);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
 
   return (
     <>
       <header style={styles.header}>
         <h1 style={styles.headerTitle}>Scrolling Car Animation</h1>
       </header>
-      
-      <div style={styles.scrollContainer}>
-        <div style={styles.canvasContainer}>
-          <Canvas camera={{ position: [0, 15, 0], rotation: [-Math.PI / 2, 0, 0], fov: 110 }}>
+
+      <div style={styles.canvasContainer}>
+        <div style={styles.canvasWrapper}>
+          <Canvas camera={{ position: [0, 15, 0], rotation: [-Math.PI / 2, 0, 0], fov: 60 }}>
             <ambientLight intensity={0.5} />
             <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
             <pointLight position={[-10, -10, -10]} />
             <Suspense fallback={null}>
-              <Road pathPoints={pathPoints} />
-              <Car pathPoints={pathPoints} scrollPosition={scrollPosition} />
+                <Road pathPoints={pathPoints} />
+                <Car pathPoints={pathPoints} />
             </Suspense>
           </Canvas>
         </div>
