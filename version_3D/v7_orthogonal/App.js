@@ -9,7 +9,6 @@ const content = {
   Node2: ['leaf1'],
   Node3: ['leaf1', 'leaf2'],
   Node4: ['leaf1'],
-  Node5: ['leaf1', 'leaf2'],
   Last: ['leaf1', 'leaf2', 'leaf3'],
 };
 
@@ -17,23 +16,27 @@ const content = {
 const CarAnimation = ({ pathPoints, scrollProgress }) => {
   const carRef = useRef();
   const { scene } = useGLTF('/truck.glb');
+  const curveRef = useRef();
   const previousPosition = useRef(new THREE.Vector3());
 
+  useEffect(() => {
+    if (pathPoints.length > 1) {
+      curveRef.current = new THREE.CatmullRomCurve3(pathPoints);
+    }
+  }, [pathPoints]);
+
   useFrame(() => {
-    if (carRef.current && pathPoints.length > 1) {
-      const totalDistance = calculateTotalDistance(pathPoints);
-      const currentDistance = scrollProgress * totalDistance;
-      const point = getPointAtDistance(pathPoints, currentDistance);
-      
+    if (carRef.current && curveRef.current) {
+      const point = curveRef.current.getPoint(scrollProgress);
       carRef.current.position.copy(point);
 
       // Calculate the direction of movement
       const movement = new THREE.Vector3().subVectors(point, previousPosition.current);
-
+      
       if (movement.length() > 0.001) {
         const lookAtPoint = new THREE.Vector3().addVectors(point, movement);
         carRef.current.lookAt(lookAtPoint);
-
+        
         // Apply additional rotation to align the car properly
         carRef.current.rotateY(1.25);
         carRef.current.rotateX(0);
@@ -47,31 +50,8 @@ const CarAnimation = ({ pathPoints, scrollProgress }) => {
   return <primitive object={scene} ref={carRef} scale={[3, 3, 3]} />;
 };
 
-// Helper function to calculate total path distance
-const calculateTotalDistance = (points) => {
-  let totalDistance = 0;
-  for (let i = 1; i < points.length; i++) {
-    totalDistance += points[i].distanceTo(points[i - 1]);
-  }
-  return totalDistance;
-};
-
-// Helper function to get point at a specific distance along the path
-const getPointAtDistance = (points, distance) => {
-  let accumulatedDistance = 0;
-  for (let i = 1; i < points.length; i++) {
-    const segmentLength = points[i].distanceTo(points[i - 1]);
-    if (accumulatedDistance + segmentLength >= distance) {
-      const t = (distance - accumulatedDistance) / segmentLength;
-      return new THREE.Vector3().lerpVectors(points[i - 1], points[i], t);
-    }
-    accumulatedDistance += segmentLength;
-  }
-  return points[points.length - 1].clone();
-};
-
 // Component for node diagram and road path line
-const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
+const NodeDiagram = ({ nodes, boxPosition = [0, 0.125, 0] }) => {
   const groupRefs = useRef({});
   const leafGroupRefs = useRef({});
   const { camera } = useThree();
@@ -112,7 +92,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
               const leafX = Math.cos(angle) * 1.5;
               const leafY = Math.sin(angle) * 1.5;
               const leafGroupRef = leafGroupRefs.current[`${node.id}-${leaf}`] || (leafGroupRefs.current[`${node.id}-${leaf}`] = React.createRef());
-
+              
               return (
                 <React.Fragment key={`${node.id}-${leaf}`}>
                   <group ref={leafGroupRef} position={[node.x + leafX, node.y + leafY, node.z]}>
@@ -140,7 +120,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
         );
       })}
       <Line
-        points={pathPoints}
+        points={nodes.map(node => new THREE.Vector3(node.x, node.y, node.z))}
         color="black"
         lineWidth={2}
         dashed={false}
@@ -156,7 +136,7 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints }) {
       <PerspectiveCamera makeDefault position={[0, 15, 0]} fov={60} />
       <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-      <NodeDiagram nodes={nodes} pathPoints={pathPoints} />
+      <NodeDiagram nodes={nodes} />
       <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} />
       <OrbitControls enableZoom={false} enablePan={false} enableRotate={true} target={[0, 0, 0]} />
     </Canvas>
@@ -169,61 +149,40 @@ function App() {
   const [scrollProgress, setScrollProgress] = useState(0);
   const [pathPoints, setPathPoints] = useState([]);
 
-  const generateCoordinates = () => {
-    const INITIAL_Z = -5;
-    const MID_X = 0;
-    const Z_INCREMENT = 2;
-    const X_OFFSET = 5;
-    const VERTICAL_EXTENSION = 2;
-
-    const nodeIds = Object.keys(content);
-    const coordinates = [];
-    const pathCoordinates = [];
-    let currentZ = INITIAL_Z;
-    let currentX = MID_X;
-
-    // First node
-    coordinates.push({ id: nodeIds[0], x: currentX, y: 0, z: currentZ });
-    pathCoordinates.push(new THREE.Vector3(currentX, 0, currentZ));
-
-    // Intermediate nodes
-    for (let i = 1; i < nodeIds.length - 1; i++) {
-      if (i % 2 === 1) {
-        // Horizontal movement
-        const nextX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
-        pathCoordinates.push(new THREE.Vector3(nextX, 0, currentZ));
-        
-        // Place node at 1/3 or 2/3 of the horizontal line
-        const nodeX = (i % 4 === 1) ? MID_X + (X_OFFSET / 3) : MID_X - (X_OFFSET / 3);
-        coordinates.push({ id: nodeIds[i], x: nodeX, y: 0, z: currentZ });
-        
-        currentX = nextX;
-      } else {
-        // Vertical movement
-        currentZ += Z_INCREMENT + VERTICAL_EXTENSION;
-        pathCoordinates.push(new THREE.Vector3(currentX, 0, currentZ));
-        
-        // Place node at the center of the vertical line
-        coordinates.push({ id: nodeIds[i], x: currentX, y: 0, z: currentZ - (VERTICAL_EXTENSION / 2) });
-      }
-    }
-
-    // Last node - maintaining orthogonal nature
-    currentZ += Z_INCREMENT + VERTICAL_EXTENSION;
-    // Add an extra point to create a right angle
-    pathCoordinates.push(new THREE.Vector3(currentX, 0, currentZ));
-    // Move to the center
-    pathCoordinates.push(new THREE.Vector3(MID_X, 0, currentZ));
-    
-    coordinates.push({ id: nodeIds[nodeIds.length - 1], x: MID_X, y: 0, z: currentZ });
-
-    return { nodes: coordinates, path: pathCoordinates };
-  };
-
   useEffect(() => {
-    const { nodes: newNodes, path: newPath } = generateCoordinates();
+    const generateCoordinates = () => {
+      const INITIAL_Z = -5;
+      const MID_X = 0;
+      const Z_INCREMENT = 2;
+      const X_OFFSET = 5;
+
+      const nodeIds = Object.keys(content);
+      const coordinates = [];
+      let currentZ = INITIAL_Z;
+      let currentX = MID_X;
+
+      coordinates.push({ id: nodeIds[0], x: currentX, y: 0, z: currentZ });
+
+      for (let i = 1; i < nodeIds.length - 1; i++) {
+        if (i % 2 === 1) {
+          currentX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
+        } else {
+          currentZ += Z_INCREMENT;
+        }
+        coordinates.push({ id: nodeIds[i], x: currentX, y: 0, z: currentZ });
+      }
+
+      coordinates.push({ id: nodeIds[nodeIds.length - 1], x: MID_X, y: 0, z: currentZ + Z_INCREMENT });
+      return coordinates;
+    };
+
+    const newNodes = generateCoordinates();
     setNodes(newNodes);
-    setPathPoints(newPath);
+
+    if (newNodes.length >= 2) {
+      const points = newNodes.map(node => new THREE.Vector3(node.x, node.y, node.z));
+      setPathPoints(points);
+    }
   }, []);
 
   useEffect(() => {
