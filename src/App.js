@@ -18,29 +18,31 @@ const CarAnimation = ({ pathPoints, scrollProgress }) => {
   const carRef = useRef();
   const { scene } = useGLTF('/truck.glb');
   const previousPosition = useRef(new THREE.Vector3());
+  const elevationOffset = new THREE.Vector3(0, 0.2, 0); // Slight upward offset
 
   useFrame(() => {
     if (carRef.current && pathPoints.length > 1) {
       const totalDistance = calculateTotalDistance(pathPoints);
       const currentDistance = scrollProgress * totalDistance;
       const point = getPointAtDistance(pathPoints, currentDistance);
-      
-      carRef.current.position.copy(point);
 
-      // Calculate the direction of movement
+      // Apply the elevation offset to the point, not the car's position directly
+      const elevatedPoint = point.clone().add(elevationOffset);
+      carRef.current.position.copy(elevatedPoint);
+
+      // Calculate the direction of movement using non-elevated points
       const movement = new THREE.Vector3().subVectors(point, previousPosition.current);
 
       if (movement.length() > 0.001) {
-        const lookAtPoint = new THREE.Vector3().addVectors(point, movement);
+        // Create a look-at point that's elevated the same amount as the car
+        const lookAtPoint = new THREE.Vector3().addVectors(elevatedPoint, movement);
         carRef.current.lookAt(lookAtPoint);
 
         // Apply additional rotation to align the car properly
         carRef.current.rotateY(1.25);
-        carRef.current.rotateX(0);
-        carRef.current.rotateZ(0);
       }
 
-      previousPosition.current.copy(point);
+      previousPosition.current.copy(point); // Store non-elevated point
     }
   });
 
@@ -174,51 +176,52 @@ function App() {
     const MID_X = 0;
     const Z_INCREMENT = 2;
     const X_OFFSET = 5;
-    const VERTICAL_EXTENSION = 2;
-
+  
     const nodeIds = Object.keys(content);
-    const coordinates = [];
-    const pathCoordinates = [];
+    const cornerPoints = [];
     let currentZ = INITIAL_Z;
     let currentX = MID_X;
-
-    // First node
-    coordinates.push({ id: nodeIds[0], x: currentX, y: 0, z: currentZ });
-    pathCoordinates.push(new THREE.Vector3(currentX, 0, currentZ));
-
-    // Intermediate nodes
-    for (let i = 1; i < nodeIds.length - 1; i++) {
+  
+    // Step 1: Generate corner points
+    cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
+  
+    for (let i = 1; i < nodeIds.length; i++) {
       if (i % 2 === 1) {
         // Horizontal movement
-        const nextX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
-        pathCoordinates.push(new THREE.Vector3(nextX, 0, currentZ));
-        
-        // Place node at 1/3 or 2/3 of the horizontal line
-        const nodeX = (i % 4 === 1) ? MID_X + (X_OFFSET / 3) : MID_X - (X_OFFSET / 3);
-        coordinates.push({ id: nodeIds[i], x: nodeX, y: 0, z: currentZ });
-        
-        currentX = nextX;
+        currentX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
       } else {
         // Vertical movement
-        currentZ += Z_INCREMENT + VERTICAL_EXTENSION;
-        pathCoordinates.push(new THREE.Vector3(currentX, 0, currentZ));
-        
-        // Place node at the center of the vertical line
-        coordinates.push({ id: nodeIds[i], x: currentX, y: 0, z: currentZ - (VERTICAL_EXTENSION / 2) });
+        currentZ += Z_INCREMENT;
       }
+      cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
     }
-
-    // Last node - maintaining orthogonal nature
-    currentZ += Z_INCREMENT + VERTICAL_EXTENSION;
-    // Add an extra point to create a right angle
-    pathCoordinates.push(new THREE.Vector3(currentX, 0, currentZ));
-    // Move to the center
-    pathCoordinates.push(new THREE.Vector3(MID_X, 0, currentZ));
-    
-    coordinates.push({ id: nodeIds[nodeIds.length - 1], x: MID_X, y: 0, z: currentZ });
-
-    return { nodes: coordinates, path: pathCoordinates };
+  
+    // Add the final point back to the center
+    cornerPoints.push(new THREE.Vector3(MID_X, 0, currentZ));
+  
+    // Step 2: Calculate positions for node placement
+    const nodeCoordinates = [];
+    for (let i = 0; i < nodeIds.length; i++) {
+      let position;
+      if (i === 0) {
+        // First node: use the first corner point
+        position = cornerPoints[0];
+      } else if (i === nodeIds.length - 1) {
+        // Last node: use the last corner point
+        position = cornerPoints[cornerPoints.length - 1];
+      } else {
+        // Intermediate nodes: use midpoints
+        const start = cornerPoints[i];
+        const end = cornerPoints[i + 1];
+        position = new THREE.Vector3().addVectors(start, end).multiplyScalar(0.5);
+      }
+      nodeCoordinates.push({ id: nodeIds[i], x: position.x, y: 0, z: position.z });
+    }
+  
+    return { nodes: nodeCoordinates, path: cornerPoints };
   };
+
+
 
   useEffect(() => {
     const { nodes: newNodes, path: newPath } = generateCoordinates();
