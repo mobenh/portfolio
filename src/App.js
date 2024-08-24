@@ -176,15 +176,31 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
 
 // Combined visualization component
 function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached }) {
+  const controlsRef = useRef();
+
+  useEffect(() => {
+    if (controlsRef.current) {
+      controlsRef.current.target.set(0, 0, 0);
+      controlsRef.current.update();
+    }
+  }, []);
+
   return (
     <Canvas>
-      <PerspectiveCamera makeDefault position={[0, 15, 0]} fov={60} />
+      <PerspectiveCamera makeDefault position={[-15, 15, 15]} fov={40} />
       <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
       <NodeDiagram nodes={nodes} pathPoints={pathPoints} visibleLeaves={visibleLeaves} />
       <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} onNodeReached={onNodeReached} />
       <AxisHelper />
-      <OrbitControls enableZoom={false} enablePan={false} enableRotate={true} target={[0, 0, 0]} />
+      <OrbitControls
+        ref={controlsRef}
+        enableZoom={false}
+        enablePan={false}
+        enableRotate={true}
+        maxPolarAngle={Math.PI / 2}
+        minPolarAngle={Math.PI / 6}
+      />
     </Canvas>
   );
 }
@@ -203,15 +219,15 @@ function App() {
     let currentX = 0;
     const Z_INCREMENT = 3.5;
     const X_OFFSET = -6;
-  
+
     // Step 1: Generate corner points
     // Add the initial point before the first node
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ - Z_INCREMENT));
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
-  
+
     const numIntermediateNodes = nodeIds.length - 2;
     const loopLimit = Math.ceil((numIntermediateNodes - 1) / 3) * 2 + 2;
-  
+
     for (let i = 1; i < loopLimit; i++) {
       if (i % 2 === 1) {
         currentX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
@@ -220,39 +236,39 @@ function App() {
       }
       cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
     }
-  
+
     currentZ += Z_INCREMENT;
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
     cornerPoints.push(new THREE.Vector3(0, 0, currentZ));
-  
+
     currentZ += Z_INCREMENT;
     cornerPoints.push(new THREE.Vector3(0, 0, currentZ));
-  
+
     // Step 2: Calculate the center of the path
     const boundingBox = new THREE.Box3().setFromPoints(cornerPoints);
     const center = new THREE.Vector3();
     boundingBox.getCenter(center);
-  
+
     // Step 3: Adjust all points to center the path
     const centeredCornerPoints = cornerPoints.map(point => point.sub(center));
-  
+
     // Step 4: Calculate node positions based on centered corner points
     const nodeCoordinates = [];
     const intermediateNodes = nodeIds.slice(1, -1);
-  
+
     // Place first node at the second corner point (after the initial line)
     nodeCoordinates.push({ id: nodeIds[0], x: centeredCornerPoints[1].x, y: 0, z: centeredCornerPoints[1].z });
-  
+
     // Distribute nodes
     let nodeIndex = 0;
     for (let i = 3; i < centeredCornerPoints.length - 2 && nodeIndex < numIntermediateNodes; i++) {
       const start = centeredCornerPoints[i - 1];
       const end = centeredCornerPoints[i];
-  
+
       const deltaX = Math.abs(end.x - start.x);
       const deltaZ = Math.abs(end.z - start.z);
       const isShortSegment = deltaZ > deltaX;
-  
+
       if (!isShortSegment) {
         for (let j = 0; j < 2 && nodeIndex < numIntermediateNodes; j++) {
           const t = (j + 1) / 3;
@@ -268,11 +284,11 @@ function App() {
         }
       }
     }
-  
+
     // Place last node
     const lastCorner = centeredCornerPoints[centeredCornerPoints.length - 2];
     nodeCoordinates.push({ id: nodeIds[nodeIds.length - 1], x: lastCorner.x, y: 0, z: lastCorner.z });
-  
+
     return { nodes: nodeCoordinates, path: centeredCornerPoints };
   };
 
