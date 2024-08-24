@@ -4,26 +4,26 @@ import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-th
 import * as THREE from 'three';
 
 const content = {
-  First: ['leaf1'],
+  First: ['leaf1', 'leaf2', 'leaf3'],
   Node1: ['leaf1'],
-  Node2: ['leaf1'],
+  Node2: ['leaf1', 'leaf2', 'leaf3'],
   Node3: ['leaf1'],
   Node4: ['leaf1'],
-  Node5: ['leaf1'],
-  Node6: ['leaf1'],
-  Node7: ['leaf1'],
-  Node8: ['leaf1'],
-  Node9: ['leaf1'],
-  Node10: ['leaf1'],
+  // Node5: ['leaf1'],
+  // Node6: ['leaf1'],
+  // Node7: ['leaf1'],
+  // Node8: ['leaf1'],
+  // Node9: ['leaf1'],
+  // Node10: ['leaf1'],
   Last: ['leaf1'],
 };
 
 // Component for car animation
-const CarAnimation = ({ pathPoints, scrollProgress }) => {
+const CarAnimation = ({ pathPoints, scrollProgress, onNodeReached }) => {
   const carRef = useRef();
   const { scene } = useGLTF('/truck.glb');
   const previousPosition = useRef(new THREE.Vector3());
-  const elevationOffset = new THREE.Vector3(0, 0.2, 0); // Slight upward offset
+  const elevationOffset = new THREE.Vector3(0, 0.2, 0);
 
   useFrame(() => {
     if (carRef.current && pathPoints.length > 1) {
@@ -31,23 +31,21 @@ const CarAnimation = ({ pathPoints, scrollProgress }) => {
       const currentDistance = scrollProgress * totalDistance;
       const point = getPointAtDistance(pathPoints, currentDistance);
 
-      // Apply the elevation offset to the point, not the car's position directly
       const elevatedPoint = point.clone().add(elevationOffset);
       carRef.current.position.copy(elevatedPoint);
 
-      // Calculate the direction of movement using non-elevated points
       const movement = new THREE.Vector3().subVectors(point, previousPosition.current);
 
       if (movement.length() > 0.001) {
-        // Create a look-at point that's elevated the same amount as the car
         const lookAtPoint = new THREE.Vector3().addVectors(elevatedPoint, movement);
         carRef.current.lookAt(lookAtPoint);
-
-        // Apply additional rotation to align the car properly
         carRef.current.rotateY(1.25);
       }
 
-      previousPosition.current.copy(point); // Store non-elevated point
+      previousPosition.current.copy(point);
+
+      // Check if the truck is near a node and trigger the callback
+      onNodeReached(point);
     }
   });
 
@@ -103,7 +101,7 @@ const getPointAtDistance = (points, distance) => {
 };
 
 // Component for node diagram and road path line
-const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
+const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLeaves }) => {
   const groupRefs = useRef({});
   const leafGroupRefs = useRef({});
   const { camera } = useThree();
@@ -132,10 +130,10 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
           <React.Fragment key={node.id}>
             <group ref={groupRef} position={[node.x, node.y, node.z]}>
               <mesh position={boxPosition}>
-                <boxGeometry args={[0.5, 0.2, 0.1]} />
+                <boxGeometry args={[1, 0.5, 0.1]} />
                 <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
               </mesh>
-              <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.07]} fontSize={0.15} color="black">
+              <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.07]} fontSize={0.25} color="black">
                 {node.id}
               </Text>
             </group>
@@ -145,28 +143,32 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
               const leafY = Math.sin(angle) * 1.5;
               const leafGroupRef = leafGroupRefs.current[`${node.id}-${leaf}`] || (leafGroupRefs.current[`${node.id}-${leaf}`] = React.createRef());
 
-              return (
-                <React.Fragment key={`${node.id}-${leaf}`}>
-                  <group ref={leafGroupRef} position={[node.x + leafX, node.y + leafY, node.z]}>
-                    <mesh position={boxPosition}>
-                      <boxGeometry args={[0.4, 0.15, 0.05]} />
-                      <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
-                    </mesh>
-                    <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.05]} fontSize={0.1} color="black">
-                      {leaf}
-                    </Text>
-                  </group>
-                  <Line
-                    points={[
-                      new THREE.Vector3(node.x + boxPosition[0], node.y + boxPosition[1], node.z + boxPosition[2]),
-                      new THREE.Vector3(node.x + leafX + boxPosition[0], node.y + leafY + boxPosition[1], node.z + boxPosition[2])
-                    ]}
-                    color="green"
-                    lineWidth={1}
-                    dashed={false}
-                  />
-                </React.Fragment>
-              );
+              // Only render the leaf if it's visible
+              if (visibleLeaves.includes(`${node.id}-${leaf}`)) {
+                return (
+                  <React.Fragment key={`${node.id}-${leaf}`}>
+                    <group ref={leafGroupRef} position={[node.x + leafX, node.y + leafY, node.z]}>
+                      <mesh position={boxPosition}>
+                        <boxGeometry args={[0.75, 0.25, 0.05]} />
+                        <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
+                      </mesh>
+                      <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.05]} fontSize={0.175} color="black">
+                        {leaf}
+                      </Text>
+                    </group>
+                    <Line
+                      points={[
+                        new THREE.Vector3(node.x + boxPosition[0], node.y + boxPosition[1], node.z + boxPosition[2]),
+                        new THREE.Vector3(node.x + leafX + boxPosition[0], node.y + leafY + boxPosition[1], node.z + boxPosition[2])
+                      ]}
+                      color="green"
+                      lineWidth={1}
+                      dashed={false}
+                    />
+                  </React.Fragment>
+                );
+              }
+              return null;
             })}
           </React.Fragment>
         );
@@ -182,14 +184,14 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
 };
 
 // Combined visualization component
-function CombinedVisualization({ nodes, scrollProgress, pathPoints }) {
+function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached }) {
   return (
     <Canvas>
       <PerspectiveCamera makeDefault position={[0, 15, 0]} fov={60} />
       <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-      <NodeDiagram nodes={nodes} pathPoints={pathPoints} />
-      <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} />
+      <NodeDiagram nodes={nodes} pathPoints={pathPoints} visibleLeaves={visibleLeaves} />
+      <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} onNodeReached={onNodeReached} />
       <AxisHelper />
       <OrbitControls enableZoom={false} enablePan={false} enableRotate={true} target={[0, 0, 0]} />
     </Canvas>
@@ -201,14 +203,15 @@ function App() {
   const [nodes, setNodes] = useState([]);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [pathPoints, setPathPoints] = useState([]);
+  const [visibleLeaves, setVisibleLeaves] = useState([]);
 
   const generateCoordinates = () => {
     const nodeIds = Object.keys(content);
     const cornerPoints = [];
     let currentZ = 0;
     let currentX = 0;
-    const Z_INCREMENT = 2;
-    const X_OFFSET = 5;
+    const Z_INCREMENT = 3.5;
+    const X_OFFSET = -6;
   
     // Step 1: Generate corner points
     // Add the initial point before the first node
@@ -301,11 +304,32 @@ function App() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const handleNodeReached = (truckPosition) => {
+    const nearbyNode = nodes.find(node => {
+      const distance = Math.sqrt(
+        Math.pow(node.x - truckPosition.x, 2) +
+        Math.pow(node.z - truckPosition.z, 2)
+      );
+      return distance < 0.5; // Adjust this threshold as needed
+    });
+
+    if (nearbyNode) {
+      const newLeaves = content[nearbyNode.id].map(leaf => `${nearbyNode.id}-${leaf}`);
+      setVisibleLeaves(prevLeaves => [...new Set([...prevLeaves, ...newLeaves])]);
+    }
+  };
+
   return (
     <div className="App">
       <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
-          <CombinedVisualization nodes={nodes} scrollProgress={scrollProgress} pathPoints={pathPoints} />
+          <CombinedVisualization
+            nodes={nodes}
+            scrollProgress={scrollProgress}
+            pathPoints={pathPoints}
+            visibleLeaves={visibleLeaves}
+            onNodeReached={handleNodeReached}
+          />
         </div>
         <div style={{ height: '400vh' }} />
       </div>
