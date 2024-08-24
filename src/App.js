@@ -103,11 +103,10 @@ const getPointAtDistance = (points, distance) => {
 // Component for node diagram and road path line
 const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLeaves }) => {
   const groupRefs = useRef({});
-  const leafGroupRefs = useRef({});
   const { camera } = useThree();
 
   useFrame(() => {
-    const rotateGroupToFaceCamera = (ref) => {
+    Object.values(groupRefs.current).forEach((ref) => {
       if (ref.current) {
         const direction = new THREE.Vector3();
         const groupPosition = ref.current.position;
@@ -115,10 +114,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
         const angle = Math.atan2(direction.x, direction.z);
         ref.current.rotation.y = angle;
       }
-    };
-
-    Object.values(groupRefs.current).forEach(rotateGroupToFaceCamera);
-    Object.values(leafGroupRefs.current).forEach(rotateGroupToFaceCamera);
+    });
   });
 
   return (
@@ -127,50 +123,45 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
         const groupRef = groupRefs.current[node.id] || (groupRefs.current[node.id] = React.createRef());
 
         return (
-          <React.Fragment key={node.id}>
-            <group ref={groupRef} position={[node.x, node.y, node.z]}>
-              <mesh position={boxPosition}>
-                <boxGeometry args={[1, 0.5, 0.1]} />
-                <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
-              </mesh>
-              <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.07]} fontSize={0.25} color="black">
-                {node.id}
-              </Text>
-            </group>
+          <group key={node.id} ref={groupRef} position={[node.x, node.y, node.z]}>
+            <mesh position={boxPosition}>
+              <boxGeometry args={[1, 0.5, 0.1]} />
+              <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
+            </mesh>
+            <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.07]} fontSize={0.25} color="black">
+              {node.id}
+            </Text>
             {content[node.id].map((leaf, leafIndex) => {
               const angle = (Math.PI / (content[node.id].length + 1)) * (leafIndex + 1);
               const leafX = Math.cos(angle) * 1.5;
               const leafY = Math.sin(angle) * 1.5;
-              const leafGroupRef = leafGroupRefs.current[`${node.id}-${leaf}`] || (leafGroupRefs.current[`${node.id}-${leaf}`] = React.createRef());
 
               // Only render the leaf if it's visible
               if (visibleLeaves.includes(`${node.id}-${leaf}`)) {
                 return (
-                  <React.Fragment key={`${node.id}-${leaf}`}>
-                    <group ref={leafGroupRef} position={[node.x + leafX, node.y + leafY, node.z]}>
-                      <mesh position={boxPosition}>
-                        <boxGeometry args={[0.75, 0.25, 0.05]} />
-                        <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
-                      </mesh>
-                      <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.05]} fontSize={0.175} color="black">
-                        {leaf}
-                      </Text>
-                    </group>
+                  <group key={`${node.id}-${leaf}`}>
+                    <mesh position={[leafX, leafY, 0]}>
+                      <boxGeometry args={[0.75, 0.25, 0.05]} />
+                      <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
+                    </mesh>
+                    <Text position={[leafX, leafY, 0.05]} fontSize={0.175} color="black">
+                      {leaf}
+                    </Text>
                     <Line
                       points={[
-                        new THREE.Vector3(node.x + boxPosition[0], node.y + boxPosition[1], node.z + boxPosition[2]),
-                        new THREE.Vector3(node.x + leafX + boxPosition[0], node.y + leafY + boxPosition[1], node.z + boxPosition[2])
+                        new THREE.Vector3(0, 0, 0),
+                        new THREE.Vector3(leafX, leafY, 0)
                       ]}
                       color="green"
                       lineWidth={1}
                       dashed={false}
                     />
-                  </React.Fragment>
+                  </group>
                 );
               }
               return null;
             })}
-          </React.Fragment>
+          </group>
         );
       })}
       <Line
