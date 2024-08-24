@@ -4,18 +4,15 @@ import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-th
 import * as THREE from 'three';
 
 const content = {
-  First: ['leaf1'],
-  Node1: ['leaf1'],
+  First: ['leaf1', 'leaf2'],
+  Node1: ['leaf1', 'leaf2', 'leaf3'],
   Node2: ['leaf1'],
-  Node3: ['leaf1'],
-  Node4: ['leaf1'],
-  Node5: ['leaf1'],
-  Node6: ['leaf1'],
-  Node7: ['leaf1'],
-  // Node8: ['leaf1'],
-  // Node9: ['leaf1'],
-  // Node10: ['leaf1'],
-  Last: ['leaf1'],
+  Node3: ['leaf1', 'leaf2'],
+  Node4: ['leaf1', 'leaf2', 'leaf3'],
+  Node5: ['leaf1', 'leaf2', 'leaf3'],
+  Node6: ['leaf1', 'leaf2', 'leaf3'],
+  Node7: ['leaf1', 'leaf2', 'leaf3'],
+  Last: ['leaf1', 'leaf2', 'leaf3'],
 };
 
 // Component for car animation
@@ -53,31 +50,6 @@ const CarAnimation = ({ pathPoints, scrollProgress }) => {
 
   return <primitive object={scene} ref={carRef} scale={[3, 3, 3]} />;
 };
-
-const AxisHelper = () => {
-  return (
-    <group>
-      {/* X-axis (red) */}
-      <Line points={[[-1, 0, 0], [1, 0, 0]]} color="red" />
-      <Text position={[1.5, 0, 0]} fontSize={0.5} color="red">
-        X
-      </Text>
-
-      {/* Y-axis (green) */}
-      <Line points={[[0, -1, 0], [0, 1, 0]]} color="green" />
-      <Text position={[0, 1.5, 0]} fontSize={0.5} color="green">
-        Y
-      </Text>
-
-      {/* Z-axis (blue) */}
-      <Line points={[[0, 0, -1], [0, 0, 1]]} color="blue" />
-      <Text position={[0, 0, 1.5]} fontSize={0.5} color="blue">
-        Z
-      </Text>
-    </group>
-  );
-};
-
 
 // Helper function to calculate total path distance
 const calculateTotalDistance = (points) => {
@@ -190,7 +162,6 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints }) {
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
       <NodeDiagram nodes={nodes} pathPoints={pathPoints} />
       <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} />
-      <AxisHelper />
       <OrbitControls enableZoom={false} enablePan={false} enableRotate={true} target={[0, 0, 0]} />
     </Canvas>
   );
@@ -207,20 +178,18 @@ function App() {
     const MID_X = 0;
     const Z_INCREMENT = 2;
     const X_OFFSET = 5;
-
+  
     const nodeIds = Object.keys(content);
     const cornerPoints = [];
     let currentZ = INITIAL_Z;
     let currentX = MID_X;
-
-    // Step 1: Generate corner points (dynamically based on number of nodes)
-    cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ - Z_INCREMENT));
+  
+    // Step 1: Generate corner points (unchanged)
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
-
-    const numIntermediateNodes = nodeIds.length - 2;
-    const loopLimit = Math.ceil((numIntermediateNodes - 1) / 3) * 2 + 2;
-
-    for (let i = 1; i < loopLimit; i++) {
+    currentZ += Z_INCREMENT;
+    cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
+  
+    for (let i = 1; i < 4; i++) {
       if (i % 2 === 1) {
         currentX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
       } else {
@@ -228,34 +197,28 @@ function App() {
       }
       cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
     }
-
+  
     currentZ += Z_INCREMENT;
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
     cornerPoints.push(new THREE.Vector3(MID_X, 0, currentZ));
-
-    currentZ += Z_INCREMENT;
-    cornerPoints.push(new THREE.Vector3(MID_X, 0, currentZ));
-
-    // Step 2: Calculate positions for node placement (modified)
+  
+    // Step 2: Calculate positions for node placement
     const nodeCoordinates = [];
     const intermediateNodes = nodeIds.slice(1, -1);
-
-    // Place first node at the first corner
-    nodeCoordinates.push({ id: nodeIds[0], x: cornerPoints[1].x, y: 0, z: cornerPoints[1].z });
-
+    const numIntermediateNodes = intermediateNodes.length;
+  
+    // Place first node
+    nodeCoordinates.push({ id: nodeIds[0], x: cornerPoints[0].x, y: 0, z: cornerPoints[0].z });
+  
     // Distribute nodes
     let nodeIndex = 0;
-    for (let i = 3; i < cornerPoints.length - 2 && nodeIndex < numIntermediateNodes; i++) {
+    for (let i = 3; i < cornerPoints.length - 1 && nodeIndex < numIntermediateNodes; i++) {
       const start = cornerPoints[i - 1];
       const end = cornerPoints[i];
-
-      // Determine if the segment is short or long based on axis length
-      const deltaX = Math.abs(end.x - start.x);
-      const deltaZ = Math.abs(end.z - start.z);
-      const isShortSegment = deltaZ > deltaX;
-
+      const isShortSegment = i % 2 === 1; // odd segments are short (vertical)
+    
       if (!isShortSegment) {
-        // Place up to two nodes on long segment
+        // Place up to two nodes on long segment (even segments)
         for (let j = 0; j < 2 && nodeIndex < numIntermediateNodes; j++) {
           const t = (j + 1) / 3; // Place at 1/3 and 2/3 of the segment
           const position = new THREE.Vector3().lerpVectors(start, end, t);
@@ -263,7 +226,7 @@ function App() {
           nodeIndex++;
         }
       } else {
-        // Place one node on short segment
+        // Place one node on short segment (odd segments)
         if (nodeIndex < numIntermediateNodes) {
           const position = new THREE.Vector3().lerpVectors(start, end, 0.5);
           nodeCoordinates.push({ id: intermediateNodes[nodeIndex], x: position.x, y: 0, z: position.z });
@@ -271,11 +234,11 @@ function App() {
         }
       }
     }
-
+  
     // Place last node
-    const lastCorner = cornerPoints[cornerPoints.length - 2];
+    const lastCorner = cornerPoints[cornerPoints.length - 1];
     nodeCoordinates.push({ id: nodeIds[nodeIds.length - 1], x: lastCorner.x, y: 0, z: lastCorner.z });
-
+  
     return { nodes: nodeCoordinates, path: cornerPoints };
   };
 

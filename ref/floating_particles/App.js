@@ -1,21 +1,17 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
-import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-three/drei';
+import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 const content = {
-  First: ['leaf1'],
-  Node1: ['leaf1'],
+  First: ['leaf1', 'leaf2'],
+  Node1: ['leaf1', 'leaf2', 'leaf3'],
   Node2: ['leaf1'],
-  Node3: ['leaf1'],
+  Node3: ['leaf1', 'leaf2'],
   Node4: ['leaf1'],
-  Node5: ['leaf1'],
-  Node6: ['leaf1'],
-  Node7: ['leaf1'],
-  // Node8: ['leaf1'],
-  // Node9: ['leaf1'],
-  // Node10: ['leaf1'],
-  Last: ['leaf1'],
+  Node5: ['leaf1', 'leaf2'],
+  Node6: ['leaf1', 'leaf'],
+  Last: ['leaf1', 'leaf2', 'leaf3'],
 };
 
 // Component for car animation
@@ -54,31 +50,6 @@ const CarAnimation = ({ pathPoints, scrollProgress }) => {
   return <primitive object={scene} ref={carRef} scale={[3, 3, 3]} />;
 };
 
-const AxisHelper = () => {
-  return (
-    <group>
-      {/* X-axis (red) */}
-      <Line points={[[-1, 0, 0], [1, 0, 0]]} color="red" />
-      <Text position={[1.5, 0, 0]} fontSize={0.5} color="red">
-        X
-      </Text>
-
-      {/* Y-axis (green) */}
-      <Line points={[[0, -1, 0], [0, 1, 0]]} color="green" />
-      <Text position={[0, 1.5, 0]} fontSize={0.5} color="green">
-        Y
-      </Text>
-
-      {/* Z-axis (blue) */}
-      <Line points={[[0, 0, -1], [0, 0, 1]]} color="blue" />
-      <Text position={[0, 0, 1.5]} fontSize={0.5} color="blue">
-        Z
-      </Text>
-    </group>
-  );
-};
-
-
 // Helper function to calculate total path distance
 const calculateTotalDistance = (points) => {
   let totalDistance = 0;
@@ -107,8 +78,39 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
   const groupRefs = useRef({});
   const leafGroupRefs = useRef({});
   const { camera } = useThree();
+  
+  // Load a texture for particles
 
-  useFrame(() => {
+  // Create particle system for each node
+  const particleSystems = useMemo(() => {
+    return nodes.map((node) => {
+      const particleCount = 50;
+      const particles = new THREE.BufferGeometry();
+      const positions = new Float32Array(particleCount * 3);
+
+      for (let i = 0; i < particleCount; i++) {
+        positions[i * 3] = (Math.random() - 0.5) * 2;
+        positions[i * 3 + 1] = (Math.random() - 0.5) * 2;
+        positions[i * 3 + 2] = (Math.random() - 0.5) * 2;
+      }
+
+      particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+      const material = new THREE.PointsMaterial({
+        size: 0.05,
+        transparent: true,
+        blending: THREE.AdditiveBlending,
+        depthWrite: false,
+        color: new THREE.Color().setHSL(Math.random(), 1, 0.5),
+      });
+
+      return new THREE.Points(particles, material);
+    });
+  }, [nodes]);
+
+  useFrame((state) => {
+    const time = state.clock.getElapsedTime();
+
     const rotateGroupToFaceCamera = (ref) => {
       if (ref.current) {
         const direction = new THREE.Vector3();
@@ -121,23 +123,49 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
 
     Object.values(groupRefs.current).forEach(rotateGroupToFaceCamera);
     Object.values(leafGroupRefs.current).forEach(rotateGroupToFaceCamera);
+
+    // Animate particle systems
+    particleSystems.forEach((system, index) => {
+      system.rotation.y = time * 0.2;
+      system.position.y = Math.sin(time + index) * 0.1;
+    });
   });
 
   return (
     <group>
-      {nodes.map((node) => {
+      {nodes.map((node, index) => {
         const groupRef = groupRefs.current[node.id] || (groupRefs.current[node.id] = React.createRef());
+        const isFirst = index === 0;
+        const isLast = index === nodes.length - 1;
+        const nodeColor = isFirst ? "#4CAF50" : isLast ? "#F44336" : "#2196F3";
 
         return (
           <React.Fragment key={node.id}>
             <group ref={groupRef} position={[node.x, node.y, node.z]}>
               <mesh position={boxPosition}>
-                <boxGeometry args={[0.5, 0.2, 0.1]} />
-                <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
+                <dodecahedronGeometry args={[0.3, 0]} />
+                <meshPhysicalMaterial 
+                  color={nodeColor} 
+                  metalness={0.8} 
+                  roughness={0.2} 
+                  clearcoat={1}
+                  clearcoatRoughness={0.1}
+                />
               </mesh>
-              <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.07]} fontSize={0.15} color="black">
-                {node.id}
-              </Text>
+              <primitive object={particleSystems[index]} position={boxPosition} />
+              <Html position={[boxPosition[0], boxPosition[1] + 0.5, boxPosition[2]]}>
+                <div style={{ 
+                  background: 'rgba(0,0,0,0.7)', 
+                  color: 'white', 
+                  padding: '5px 10px', 
+                  borderRadius: '5px',
+                  fontSize: '12px',
+                  fontWeight: 'bold',
+                  textShadow: '0 0 5px #00ff00'
+                }}>
+                  {node.id}
+                </div>
+              </Html>
             </group>
             {content[node.id].map((leaf, leafIndex) => {
               const angle = (Math.PI / (content[node.id].length + 1)) * (leafIndex + 1);
@@ -149,10 +177,22 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
                 <React.Fragment key={`${node.id}-${leaf}`}>
                   <group ref={leafGroupRef} position={[node.x + leafX, node.y + leafY, node.z]}>
                     <mesh position={boxPosition}>
-                      <boxGeometry args={[0.4, 0.15, 0.05]} />
-                      <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
+                      <octahedronGeometry args={[0.2, 0]} />
+                      <meshPhysicalMaterial 
+                        color="#FFC107" 
+                        metalness={0.5} 
+                        roughness={0.5}
+                        transmission={0.2}
+                        thickness={0.5}
+                      />
                     </mesh>
-                    <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.05]} fontSize={0.1} color="black">
+                    <Text 
+                      position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.25]} 
+                      fontSize={0.1} 
+                      color="white"
+                      outlineWidth={0.004}
+                      outlineColor="black"
+                    >
                       {leaf}
                     </Text>
                   </group>
@@ -161,9 +201,12 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
                       new THREE.Vector3(node.x + boxPosition[0], node.y + boxPosition[1], node.z + boxPosition[2]),
                       new THREE.Vector3(node.x + leafX + boxPosition[0], node.y + leafY + boxPosition[1], node.z + boxPosition[2])
                     ]}
-                    color="green"
-                    lineWidth={1}
-                    dashed={false}
+                    color="#4CAF50"
+                    lineWidth={2}
+                    dashed={true}
+                    dashScale={3}
+                    dashSize={0.1}
+                    gapSize={0.05}
                   />
                 </React.Fragment>
               );
@@ -173,10 +216,17 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.125, 0] }) => {
       })}
       <Line
         points={pathPoints}
-        color="black"
-        lineWidth={2}
+        color="#E91E63"
+        lineWidth={5}
         dashed={false}
-      />
+      >
+        <lineDashedMaterial
+          color="#E91E63"
+          dashSize={0.5}
+          gapSize={0.2}
+          scale={1}
+        />
+      </Line>
     </group>
   );
 };
@@ -190,7 +240,6 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints }) {
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
       <NodeDiagram nodes={nodes} pathPoints={pathPoints} />
       <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} />
-      <AxisHelper />
       <OrbitControls enableZoom={false} enablePan={false} enableRotate={true} target={[0, 0, 0]} />
     </Canvas>
   );
@@ -207,54 +256,45 @@ function App() {
     const MID_X = 0;
     const Z_INCREMENT = 2;
     const X_OFFSET = 5;
-
+  
     const nodeIds = Object.keys(content);
     const cornerPoints = [];
     let currentZ = INITIAL_Z;
     let currentX = MID_X;
-
-    // Step 1: Generate corner points (dynamically based on number of nodes)
-    cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ - Z_INCREMENT));
+  
+    // Step 1: Generate corner points
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
-
-    const numIntermediateNodes = nodeIds.length - 2;
-    const loopLimit = Math.ceil((numIntermediateNodes - 1) / 3) * 2 + 2;
-
-    for (let i = 1; i < loopLimit; i++) {
+  
+    for (let i = 1; i < 5; i++) {
       if (i % 2 === 1) {
+        // Horizontal movement (long segment)
         currentX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
       } else {
+        // Vertical movement (short segment)
         currentZ += Z_INCREMENT;
       }
       cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
     }
-
-    currentZ += Z_INCREMENT;
-    cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
+  
+    // Add the final point back to the center
     cornerPoints.push(new THREE.Vector3(MID_X, 0, currentZ));
-
-    currentZ += Z_INCREMENT;
-    cornerPoints.push(new THREE.Vector3(MID_X, 0, currentZ));
-
-    // Step 2: Calculate positions for node placement (modified)
+  
+    // Step 2: Calculate positions for node placement
     const nodeCoordinates = [];
     const intermediateNodes = nodeIds.slice(1, -1);
-
-    // Place first node at the first corner
-    nodeCoordinates.push({ id: nodeIds[0], x: cornerPoints[1].x, y: 0, z: cornerPoints[1].z });
-
+    const numIntermediateNodes = intermediateNodes.length;
+  
+    // Place first node
+    nodeCoordinates.push({ id: nodeIds[0], x: cornerPoints[0].x, y: 0, z: cornerPoints[0].z });
+  
     // Distribute nodes
     let nodeIndex = 0;
-    for (let i = 3; i < cornerPoints.length - 2 && nodeIndex < numIntermediateNodes; i++) {
+    for (let i = 1; i < cornerPoints.length && nodeIndex < numIntermediateNodes; i++) {
       const start = cornerPoints[i - 1];
       const end = cornerPoints[i];
-
-      // Determine if the segment is short or long based on axis length
-      const deltaX = Math.abs(end.x - start.x);
-      const deltaZ = Math.abs(end.z - start.z);
-      const isShortSegment = deltaZ > deltaX;
-
-      if (!isShortSegment) {
+      const isLongSegment = i % 2 === 1; // Odd segments are long (horizontal)
+  
+      if (isLongSegment) {
         // Place up to two nodes on long segment
         for (let j = 0; j < 2 && nodeIndex < numIntermediateNodes; j++) {
           const t = (j + 1) / 3; // Place at 1/3 and 2/3 of the segment
@@ -271,11 +311,11 @@ function App() {
         }
       }
     }
-
+  
     // Place last node
-    const lastCorner = cornerPoints[cornerPoints.length - 2];
+    const lastCorner = cornerPoints[cornerPoints.length - 1];
     nodeCoordinates.push({ id: nodeIds[nodeIds.length - 1], x: lastCorner.x, y: 0, z: lastCorner.z });
-
+  
     return { nodes: nodeCoordinates, path: cornerPoints };
   };
 
