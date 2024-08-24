@@ -12,9 +12,9 @@ const content = {
   Node5: ['leaf1'],
   Node6: ['leaf1'],
   Node7: ['leaf1'],
-  // Node8: ['leaf1'],
-  // Node9: ['leaf1'],
-  // Node10: ['leaf1'],
+  Node8: ['leaf1'],
+  Node9: ['leaf1'],
+  Node10: ['leaf1'],
   Last: ['leaf1'],
 };
 
@@ -203,23 +203,21 @@ function App() {
   const [pathPoints, setPathPoints] = useState([]);
 
   const generateCoordinates = () => {
-    const INITIAL_Z = -5;
-    const MID_X = 0;
-    const Z_INCREMENT = 2;
-    const X_OFFSET = 5;
-
     const nodeIds = Object.keys(content);
     const cornerPoints = [];
-    let currentZ = INITIAL_Z;
-    let currentX = MID_X;
-
-    // Step 1: Generate corner points (dynamically based on number of nodes)
+    let currentZ = 0;
+    let currentX = 0;
+    const Z_INCREMENT = 2;
+    const X_OFFSET = 5;
+  
+    // Step 1: Generate corner points
+    // Add the initial point before the first node
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ - Z_INCREMENT));
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
-
+  
     const numIntermediateNodes = nodeIds.length - 2;
     const loopLimit = Math.ceil((numIntermediateNodes - 1) / 3) * 2 + 2;
-
+  
     for (let i = 1; i < loopLimit; i++) {
       if (i % 2 === 1) {
         currentX = (i % 4 === 1) ? X_OFFSET : -X_OFFSET;
@@ -228,42 +226,47 @@ function App() {
       }
       cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
     }
-
+  
     currentZ += Z_INCREMENT;
     cornerPoints.push(new THREE.Vector3(currentX, 0, currentZ));
-    cornerPoints.push(new THREE.Vector3(MID_X, 0, currentZ));
-
+    cornerPoints.push(new THREE.Vector3(0, 0, currentZ));
+  
     currentZ += Z_INCREMENT;
-    cornerPoints.push(new THREE.Vector3(MID_X, 0, currentZ));
-
-    // Step 2: Calculate positions for node placement (modified)
+    cornerPoints.push(new THREE.Vector3(0, 0, currentZ));
+  
+    // Step 2: Calculate the center of the path
+    const boundingBox = new THREE.Box3().setFromPoints(cornerPoints);
+    const center = new THREE.Vector3();
+    boundingBox.getCenter(center);
+  
+    // Step 3: Adjust all points to center the path
+    const centeredCornerPoints = cornerPoints.map(point => point.sub(center));
+  
+    // Step 4: Calculate node positions based on centered corner points
     const nodeCoordinates = [];
     const intermediateNodes = nodeIds.slice(1, -1);
-
-    // Place first node at the first corner
-    nodeCoordinates.push({ id: nodeIds[0], x: cornerPoints[1].x, y: 0, z: cornerPoints[1].z });
-
+  
+    // Place first node at the second corner point (after the initial line)
+    nodeCoordinates.push({ id: nodeIds[0], x: centeredCornerPoints[1].x, y: 0, z: centeredCornerPoints[1].z });
+  
     // Distribute nodes
     let nodeIndex = 0;
-    for (let i = 3; i < cornerPoints.length - 2 && nodeIndex < numIntermediateNodes; i++) {
-      const start = cornerPoints[i - 1];
-      const end = cornerPoints[i];
-
-      // Determine if the segment is short or long based on axis length
+    for (let i = 3; i < centeredCornerPoints.length - 2 && nodeIndex < numIntermediateNodes; i++) {
+      const start = centeredCornerPoints[i - 1];
+      const end = centeredCornerPoints[i];
+  
       const deltaX = Math.abs(end.x - start.x);
       const deltaZ = Math.abs(end.z - start.z);
       const isShortSegment = deltaZ > deltaX;
-
+  
       if (!isShortSegment) {
-        // Place up to two nodes on long segment
         for (let j = 0; j < 2 && nodeIndex < numIntermediateNodes; j++) {
-          const t = (j + 1) / 3; // Place at 1/3 and 2/3 of the segment
+          const t = (j + 1) / 3;
           const position = new THREE.Vector3().lerpVectors(start, end, t);
           nodeCoordinates.push({ id: intermediateNodes[nodeIndex], x: position.x, y: 0, z: position.z });
           nodeIndex++;
         }
       } else {
-        // Place one node on short segment
         if (nodeIndex < numIntermediateNodes) {
           const position = new THREE.Vector3().lerpVectors(start, end, 0.5);
           nodeCoordinates.push({ id: intermediateNodes[nodeIndex], x: position.x, y: 0, z: position.z });
@@ -271,12 +274,12 @@ function App() {
         }
       }
     }
-
+  
     // Place last node
-    const lastCorner = cornerPoints[cornerPoints.length - 2];
+    const lastCorner = centeredCornerPoints[centeredCornerPoints.length - 2];
     nodeCoordinates.push({ id: nodeIds[nodeIds.length - 1], x: lastCorner.x, y: 0, z: lastCorner.z });
-
-    return { nodes: nodeCoordinates, path: cornerPoints };
+  
+    return { nodes: nodeCoordinates, path: centeredCornerPoints };
   };
 
 
