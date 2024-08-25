@@ -4,18 +4,31 @@ import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-th
 import * as THREE from 'three';
 
 const content = {
-  First: ['leaf1', 'leaf2', 'leaf3'],
-  Node1: ['leaf1'],
-  Node2: ['leaf1', 'leaf2', 'leaf3'],
-  Node3: ['leaf1'],
-  Node4: ['leaf1'],
-  // Node5: ['leaf1'],
-  // Node6: ['leaf1'],
-  // Node7: ['leaf1'],
-  // Node8: ['leaf1'],
-  // Node9: ['leaf1'],
-  // Node10: ['leaf1'],
-  Last: ['leaf1'],
+  First: [
+    { name: 'leaf1' },
+    { name: 'leaf2' },
+    { name: 'leaf3' }
+  ],
+  Node1: [
+    { name: 'leaf1' },
+    {
+      name: 'leaf2',
+      descriptions: ['leaf2 description1', 'leaf2 description2'],
+      links: [
+        { beforeText: 'Visit the', text: 'Main repository', url: 'https://github.com/' },
+        { beforeText: 'Check out', text: 'My webpage', url: 'https://mobenh.com/' }
+      ]
+    },
+    { name: 'leaf3' }
+  ],
+  Node2: [
+    { name: 'leaf1' },
+    { name: 'leaf2' },
+    { name: 'leaf3' }
+  ],
+  Node3: [{ name: 'leaf1' }],
+  Node4: [{ name: 'leaf1' }],
+  Last: [{ name: 'leaf1' }]
 };
 
 // Component for car animation
@@ -52,29 +65,18 @@ const CarAnimation = ({ pathPoints, scrollProgress, onNodeReached }) => {
   return <primitive object={scene} ref={carRef} scale={[3, 3, 3]} />;
 };
 
-const AxisHelper = () => {
-  return (
-    <group>
-      {/* X-axis (red) */}
-      <Line points={[[-1, 0, 0], [1, 0, 0]]} color="red" />
-      <Text position={[1.5, 0, 0]} fontSize={0.5} color="red">
-        X
-      </Text>
-
-      {/* Y-axis (green) */}
-      <Line points={[[0, -1, 0], [0, 1, 0]]} color="green" />
-      <Text position={[0, 1.5, 0]} fontSize={0.5} color="green">
-        Y
-      </Text>
-
-      {/* Z-axis (blue) */}
-      <Line points={[[0, 0, -1], [0, 0, 1]]} color="blue" />
-      <Text position={[0, 0, 1.5]} fontSize={0.5} color="blue">
-        Z
-      </Text>
-    </group>
-  );
-};
+// const AxisHelper = () => {
+//   return (
+//     <group>
+//       <Line points={[[-1, 0, 0], [1, 0, 0]]} color="red" />
+//       <Text position={[1.5, 0, 0]} fontSize={0.5} color="red">X</Text>
+//       <Line points={[[0, -1, 0], [0, 1, 0]]} color="green" />
+//       <Text position={[0, 1.5, 0]} fontSize={0.5} color="green">Y</Text>
+//       <Line points={[[0, 0, -1], [0, 0, 1]]} color="blue" />
+//       <Text position={[0, 0, 1.5]} fontSize={0.5} color="blue">Z</Text>
+//     </group>
+//   );
+// };
 
 
 // Helper function to calculate total path distance
@@ -101,7 +103,7 @@ const getPointAtDistance = (points, distance) => {
 };
 
 // Component for node diagram and road path line
-const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLeaves }) => {
+const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLeaves, onLeafClick }) => {
   const groupRefs = useRef({});
   const { camera } = useThree();
 
@@ -137,15 +139,25 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
               const leafY = Math.sin(angle) * 1.5;
 
               // Only render the leaf if it's visible
-              if (visibleLeaves.includes(`${node.id}-${leaf}`)) {
+              if (visibleLeaves.includes(`${node.id}-${leaf.name}`)) {
+                const hasLinks = leaf.links && leaf.links.length > 0;
+
                 return (
-                  <group key={`${node.id}-${leaf}`}>
-                    <mesh position={[leafX, leafY, 0]}>
+                  <group key={`${node.id}-${leaf.name}`}>
+                    <mesh 
+                      position={[leafX, leafY, 0]}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (hasLinks) {
+                          onLeafClick(node.id, leaf);
+                        }
+                      }}
+                    >
                       <boxGeometry args={[0.75, 0.25, 0.05]} />
                       <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
                     </mesh>
                     <Text position={[leafX, leafY, 0.05]} fontSize={0.175} color="black">
-                      {leaf}
+                      {leaf.name}
                     </Text>
                     <Line
                       points={[
@@ -175,7 +187,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
 };
 
 // Combined visualization component
-function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached }) {
+function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached, onLeafClick }) {
   const controlsRef = useRef();
 
   useEffect(() => {
@@ -187,12 +199,16 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeave
 
   return (
     <Canvas>
-      <PerspectiveCamera makeDefault position={[-15, 15, 15]} fov={40} />
+      <PerspectiveCamera makeDefault position={[-15, 15, 15]} fov={45} />
       <ambientLight intensity={0.5} />
       <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
-      <NodeDiagram nodes={nodes} pathPoints={pathPoints} visibleLeaves={visibleLeaves} />
+      <NodeDiagram
+        nodes={nodes}
+        pathPoints={pathPoints}
+        visibleLeaves={visibleLeaves}
+        onLeafClick={onLeafClick}
+      />
       <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} onNodeReached={onNodeReached} />
-      <AxisHelper />
       <OrbitControls
         ref={controlsRef}
         enableZoom={false}
@@ -205,12 +221,69 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeave
   );
 }
 
+// Right Side Panel component
+const RightSidePanel = ({ revealedNodes }) => {
+  return (
+    <div style={{
+      position: 'fixed',
+      right: 0,
+      top: 0,
+      width: '400px',
+      height: '100vh',
+      backgroundColor: 'rgba(255, 255, 255, 0.8)',
+      padding: '20px',
+      overflowY: 'auto',
+      boxShadow: '-2px 0 5px rgba(0,0,0,0.1)'
+    }}>
+      <h2>Title Name</h2>
+      {revealedNodes.map((node, index) => (
+        <div key={index} style={{ marginBottom: '20px' }}>
+          <h3>{node.id}</h3>
+          <ul>
+            {content[node.id].map((leaf, leafIndex) => (
+              <li key={leafIndex}>
+                {leaf.name}
+                {leaf.descriptions && (
+                  <ul>
+                    {leaf.descriptions.map((desc, descIndex) => (
+                      <li key={descIndex}>{desc}</li>
+                    ))}
+                  </ul>
+                )}
+                {leaf.links && (
+                  <ul>
+                    {leaf.links.map((link, linkIndex) => (
+                      <li key={linkIndex}>
+                        {link.beforeText}{" "}
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: 'blue', textDecoration: 'underline' }}
+                        >
+                          {link.text}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+  );
+};
+
 // Main App component
 function App() {
   const [nodes, setNodes] = useState([]);
   const [scrollProgress, setScrollProgress] = useState(0);
   const [pathPoints, setPathPoints] = useState([]);
   const [visibleLeaves, setVisibleLeaves] = useState([]);
+  const [revealedNodes, setRevealedNodes] = useState([]);
+  // const [selectedLeaf, setSelectedLeaf] = useState(null);
 
   const generateCoordinates = () => {
     const nodeIds = Object.keys(content);
@@ -321,23 +394,40 @@ function App() {
     });
 
     if (nearbyNode) {
-      const newLeaves = content[nearbyNode.id].map(leaf => `${nearbyNode.id}-${leaf}`);
+      const newLeaves = content[nearbyNode.id].map(leaf => `${nearbyNode.id}-${leaf.name}`);
       setVisibleLeaves(prevLeaves => [...new Set([...prevLeaves, ...newLeaves])]);
+
+      // Add the newly revealed node to the revealedNodes state
+      setRevealedNodes(prevNodes => {
+        if (!prevNodes.find(node => node.id === nearbyNode.id)) {
+          return [...prevNodes, nearbyNode];
+        }
+        return prevNodes;
+      });
+    }
+  };
+
+  const handleLeafClick = (nodeId, leaf) => {
+    if (leaf.links && leaf.links.length > 0) {
+      const firstLink = leaf.links[0];
+      window.open(firstLink.url, '_blank');
     }
   };
 
   return (
     <div className="App">
       <div style={{ width: '100vw', height: '100vh', position: 'relative' }}>
-        <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: 1 }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, width: 'calc(100% - 300px)', height: '100%', zIndex: 1 }}>
           <CombinedVisualization
             nodes={nodes}
             scrollProgress={scrollProgress}
             pathPoints={pathPoints}
             visibleLeaves={visibleLeaves}
             onNodeReached={handleNodeReached}
+            onLeafClick={handleLeafClick}
           />
         </div>
+        <RightSidePanel revealedNodes={revealedNodes} />
         <div style={{ height: '400vh' }} />
       </div>
     </div>
