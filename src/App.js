@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
+import { Switch } from '@mui/material'; // Import MUI Switch component
 
 const content = {
   First: [
@@ -64,20 +65,6 @@ const CarAnimation = ({ pathPoints, scrollProgress, onNodeReached }) => {
 
   return <primitive object={scene} ref={carRef} scale={[3, 3, 3]} />;
 };
-
-// const AxisHelper = () => {
-//   return (
-//     <group>
-//       <Line points={[[-1, 0, 0], [1, 0, 0]]} color="red" />
-//       <Text position={[1.5, 0, 0]} fontSize={0.5} color="red">X</Text>
-//       <Line points={[[0, -1, 0], [0, 1, 0]]} color="green" />
-//       <Text position={[0, 1.5, 0]} fontSize={0.5} color="green">Y</Text>
-//       <Line points={[[0, 0, -1], [0, 0, 1]]} color="blue" />
-//       <Text position={[0, 0, 1.5]} fontSize={0.5} color="blue">Z</Text>
-//     </group>
-//   );
-// };
-
 
 // Helper function to calculate total path distance
 const calculateTotalDistance = (points) => {
@@ -144,7 +131,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
 
                 return (
                   <group key={`${node.id}-${leaf.name}`}>
-                    <mesh 
+                    <mesh
                       position={[leafX, leafY, 0]}
                       onClick={(e) => {
                         e.stopPropagation();
@@ -186,18 +173,21 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
   );
 };
 
-function ResponsiveScene({ children }) {
+// Modified ResponsiveScene component
+function ResponsiveScene({ children, isFreeRotate }) {
   const { size, camera } = useThree();
   const aspect = size.width / size.height;
 
   useFrame(() => {
-    // Adjust camera position based on aspect ratio
-    camera.position.set(-15 * aspect, 15, 15);
-    camera.lookAt(0, 0, 0);
+    if (!isFreeRotate) {
+      // Adjust camera position based on aspect ratio
+      camera.position.set(-15 * aspect, 15, 15);
+      camera.lookAt(0, 0, 0);
 
-    // Adjust field of view based on aspect ratio
-    camera.fov = 40 / aspect;
-    camera.updateProjectionMatrix();
+      // Adjust field of view based on aspect ratio
+      camera.fov = 40 / aspect;
+      camera.updateProjectionMatrix();
+    }
   });
 
   return (
@@ -208,8 +198,8 @@ function ResponsiveScene({ children }) {
   );
 }
 
-// Combined visualization component
-function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached, onLeafClick }) {
+// CombinedVisualization component
+function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached, onLeafClick, isFreeRotate }) {
   const controlsRef = useRef();
 
   useEffect(() => {
@@ -217,12 +207,11 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeave
       controlsRef.current.target.set(0, 0, 0);
       controlsRef.current.update();
     }
-  }, []);
+  }, [isFreeRotate]);
 
   return (
     <Canvas>
-      <ResponsiveScene>
-        <PerspectiveCamera makeDefault position={[-15, 15, 15]} fov={40} />
+      <ResponsiveScene isFreeRotate={isFreeRotate}>
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
         <NodeDiagram
@@ -236,9 +225,9 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeave
           ref={controlsRef}
           enableZoom={false}
           enablePan={false}
-          enableRotate={true}
-          maxPolarAngle={Math.PI / 2}
-          minPolarAngle={Math.PI / 6}
+          enableRotate={isFreeRotate}
+          maxPolarAngle={isFreeRotate ? Math.PI : Math.PI / 2}
+          minPolarAngle={isFreeRotate ? 0 : Math.PI / 6}
         />
       </ResponsiveScene>
     </Canvas>
@@ -308,7 +297,7 @@ function App() {
   const [pathPoints, setPathPoints] = useState([]);
   const [visibleLeaves, setVisibleLeaves] = useState([]);
   const [revealedNodes, setRevealedNodes] = useState([]);
-  // const [selectedLeaf, setSelectedLeaf] = useState(null);
+  const [isFreeRotate, setIsFreeRotate] = useState(false); // New state for toggle
 
   const generateCoordinates = () => {
     const nodeIds = Object.keys(content);
@@ -390,8 +379,6 @@ function App() {
     return { nodes: nodeCoordinates, path: centeredCornerPoints };
   };
 
-
-
   useEffect(() => {
     const { nodes: newNodes, path: newPath } = generateCoordinates();
     setNodes(newNodes);
@@ -441,26 +428,42 @@ function App() {
 
   return (
     <div className="App">
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '70%',
-          height: '100%',
-          zIndex: 1
-        }}>
-          <CombinedVisualization
-            nodes={nodes}
-            scrollProgress={scrollProgress}
-            pathPoints={pathPoints}
-            visibleLeaves={visibleLeaves}
-            onNodeReached={handleNodeReached}
-            onLeafClick={handleLeafClick}
-          />
-        </div>
-        <RightSidePanel revealedNodes={revealedNodes} />
-        <div style={{ height: '400vh' }} />
+      <div style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '70%',
+        height: '100%',
+        zIndex: 1
+      }}>
+        <CombinedVisualization
+          nodes={nodes}
+          scrollProgress={scrollProgress}
+          pathPoints={pathPoints}
+          visibleLeaves={visibleLeaves}
+          onNodeReached={handleNodeReached}
+          onLeafClick={handleLeafClick}
+          isFreeRotate={isFreeRotate} // Pass the toggle state
+        />
       </div>
+      <div style={{
+        position: 'fixed',
+        bottom: 20,
+        left: 20,
+        zIndex: 2,
+        backgroundColor: 'rgba(255, 255, 255, 0.8)',
+        padding: '10px',
+        borderRadius: '5px'
+      }}>
+        <Switch
+          checked={isFreeRotate}
+          onChange={(e) => setIsFreeRotate(e.target.checked)}
+        />
+        <span>{isFreeRotate ? 'Free Rotate' : 'Rotation Locked'}</span>
+      </div>
+      <RightSidePanel revealedNodes={revealedNodes} />
+      <div style={{ height: '400vh' }} />
+    </div>
   );
 }
 
