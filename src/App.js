@@ -2,34 +2,73 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import { Switch } from '@mui/material'; // Import MUI Switch component
+import { Switch } from '@mui/material';
 
 const content = {
-  First: [
-    { name: 'leaf1' },
-    { name: 'leaf2' },
-    { name: 'leaf3' }
+  Languages: [
+    { name: 'Python' },
+    { name: 'Golang' },
+    { name: 'JavaScript' },
+    { name: 'C++' },
   ],
-  Node1: [
-    { name: 'leaf1' },
+  Projects: [
     {
-      name: 'leaf2',
-      descriptions: ['leaf2 description1', 'leaf2 description2'],
+      name: 'Portfolio',
+      descriptions: ['Developed a responsive and dynamic portfolio using React.js, demonstrating proficiency in HTML, CSS, and JavaScript.'],
       links: [
-        { beforeText: 'Visit the', text: 'Main repository', url: 'https://github.com/' },
-        { beforeText: 'Check out', text: 'My webpage', url: 'https://mobenh.com/' }
+        { beforeText: 'Visit the', text: 'mobenh.com', url: 'https://mobenh.com' },
+        { beforeText: 'View the', text: 'GitHub Repo', url: 'https://github.com/mobenh/react-portfolio' },
+      ],
+    },
+    {
+      name: 'Cloud',
+      descriptions: ['Automated instance deployment using EC2, AWS CLI, and Terraform.'],
+      links: [
+        { beforeText: 'View the', text: 'GitHub Repo', url: 'https://github.com/mobenh/terraform-aws-ec2instance' },
+      ],
+    },
+  ],
+  Frameworks: [
+    { name: 'React' },
+    { name: 'Angular' },
+  ],
+  Infrastructure: [
+    { name: 'Terraform' },
+    { name: 'AWS' },
+    { name: 'Gitlab' },
+    { name: 'Azure' },
+  ],
+  Certifications: [
+    {
+      name: 'AWS Developer',
+      // descriptions: ['Issued by Amazon Web Services'],
+      links: [
+        { beforeText: 'View the', text: 'Certification', url: 'https://www.credly.com/badges/2be8519a-87bb-4da7-bade-026d50109a5c/public_url' },
+      ],
+    },
+    {
+      name: 'AWS SysOps Administrator',
+      // descriptions: ['Issued by Amazon Web Services'],
+      links: [
+        { beforeText: 'View the', text: 'Certification', url: 'https://www.credly.com/badges/3611f19e-cfb4-4633-a5ea-1a095da9f9fd/public_url' },
+      ],
+    },
+    {
+      name: 'Azure Administrator',
+      // descriptions: ['Issued by Microsoft'],
+      links: [
+        {
+          beforeText: 'View the', text: 'Certification', url: 'https://learn.microsoft.com/api/credentials/share/en-us/MobenHaq-8295/667B837CAC710E44?sharingId=8DB882188D2F4733'
+        }
       ]
     },
-    { name: 'leaf3' }
   ],
-  Node2: [
-    { name: 'leaf1' },
-    { name: 'leaf2' },
-    { name: 'leaf3' }
+  Contact: [
+    { name: '(951) 337-8563' },
+    { name: 'moben.h@outlook.com' },
+    { name: 'LinkedIn', url: 'https://www.linkedin.com/in/moben-haq' },
+    { name: 'GitHub', url: 'https://github.com/moben-haq' },
   ],
-  Node3: [{ name: 'leaf1' }],
-  Node4: [{ name: 'leaf1' }],
-  Last: [{ name: 'leaf1' }]
 };
 
 // Component for car animation
@@ -249,7 +288,7 @@ const RightSidePanel = ({ revealedNodes }) => {
       overflowY: 'auto',
       boxShadow: '-2px 0 5px rgba(0,0,0,0.1)'
     }}>
-      <h2>Title Name</h2>
+      <h2>Moben Haq</h2>
       {revealedNodes.map((node, index) => (
         <div key={index} style={{ marginBottom: '20px' }}>
           <h3>{node.id}</h3>

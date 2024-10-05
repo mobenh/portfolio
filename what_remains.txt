@@ -1,0 +1,9 @@
+
+10/5/2024
+    - add hover tooltips to the nodes and leaves in the 3D diagram
+    - add smooth fade-in or slide-in transitions when new nodes or leaves are revealed
+    - add a footer in the web page for Call-to-Action like Contatt Me button
+    - deploy this project to AWS S3
+    - add this entire project to Gitlab and CI/CD pipeline for AWS Deploy
+    - add google analytics to the app
+    - add dark mode to the app
