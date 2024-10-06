@@ -7,3 +7,4 @@
     - add this entire project to Gitlab and CI/CD pipeline for AWS Deploy
     - add google analytics to the app
     - add dark mode to the app
+    - add icons to right side panel at least using the react-icons library

@@ -3,6 +3,9 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { Switch } from '@mui/material';
+import { useSpring, animated } from '@react-spring/three';
+import { FaLinkedin, FaGithub } from 'react-icons/fa';
+
 
 const content = {
   Languages: [
@@ -14,7 +17,7 @@ const content = {
   Projects: [
     {
       name: 'Portfolio',
-      descriptions: ['Developed a responsive and dynamic portfolio using React.js, demonstrating proficiency in HTML, CSS, and JavaScript.'],
+      descriptions: ['React.js, AWS, and Gitlab'],
       links: [
         { beforeText: 'Visit the', text: 'mobenh.com', url: 'https://mobenh.com' },
         { beforeText: 'View the', text: 'GitHub Repo', url: 'https://github.com/mobenh/react-portfolio' },
@@ -22,7 +25,7 @@ const content = {
     },
     {
       name: 'Cloud',
-      descriptions: ['Automated instance deployment using EC2, AWS CLI, and Terraform.'],
+      descriptions: ['EC2, AWS CLI, and Terraform.'],
       links: [
         { beforeText: 'View the', text: 'GitHub Repo', url: 'https://github.com/mobenh/terraform-aws-ec2instance' },
       ],
@@ -70,6 +73,76 @@ const content = {
     { name: 'GitHub', url: 'https://github.com/moben-haq' },
   ],
 };
+
+// Define the Footer component within App.js
+function Footer() {
+  const footerStyle = {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    width: '100%',
+    height: '60px',
+    backgroundColor: '#121212',      // Dark background
+    color: '#e0e0e0',                // Light text color
+    padding: '0 20px',
+    boxSizing: 'border-box',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderTop: '1px solid #333',     // Subtle border on top
+  };
+
+  const linkContainerStyle = {
+    display: 'flex',
+    alignItems: 'center',
+  };
+
+  const linkStyle = {
+    textDecoration: 'none',
+    color: '#e0e0e0',                // Match text color
+    marginLeft: '15px',
+    display: 'flex',
+    alignItems: 'center',
+    transition: 'color 0.3s',        // Smooth color transition
+  };
+
+  const linkHoverColor = '#BB86FC';  // Vibrant accent color (purple)
+
+  const iconStyle = {
+    marginRight: '5px',
+  };
+
+  return (
+    <div style={footerStyle}>
+      <p style={{ margin: 0 }}>© {new Date().getFullYear()} Moben Haq. All rights reserved.</p>
+      <div style={linkContainerStyle}>
+        <a
+          href="https://www.linkedin.com/in/moben-haq"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={linkStyle}
+          onMouseEnter={(e) => (e.currentTarget.style.color = linkHoverColor)}
+          onMouseLeave={(e) => (e.currentTarget.style.color = linkStyle.color)}
+        >
+          <FaLinkedin size={20} style={iconStyle} />
+          LinkedIn
+        </a>
+        <a
+          href="https://github.com/moben-haq"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ ...linkStyle, marginLeft: '20px' }}
+          onMouseEnter={(e) => (e.currentTarget.style.color = linkHoverColor)}
+          onMouseLeave={(e) => (e.currentTarget.style.color = linkStyle.color)}
+        >
+          <FaGithub size={20} style={iconStyle} />
+          GitHub
+        </a>
+      </div>
+    </div>
+  );
+}
+
 
 // Component for car animation
 const CarAnimation = ({ pathPoints, scrollProgress, onNodeReached }) => {
@@ -128,80 +201,23 @@ const getPointAtDistance = (points, distance) => {
   return points[points.length - 1].clone();
 };
 
-// Component for node diagram and road path line
+// NodeDiagram component with animations
 const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLeaves, onLeafClick }) => {
   const groupRefs = useRef({});
   const { camera } = useThree();
 
-  useFrame(() => {
-    Object.values(groupRefs.current).forEach((ref) => {
-      if (ref.current) {
-        const direction = new THREE.Vector3();
-        const groupPosition = ref.current.position;
-        direction.subVectors(camera.position, groupPosition).normalize();
-        const angle = Math.atan2(direction.x, direction.z);
-        ref.current.rotation.y = angle;
-      }
-    });
-  });
-
   return (
     <group>
-      {nodes.map((node) => {
-        const groupRef = groupRefs.current[node.id] || (groupRefs.current[node.id] = React.createRef());
-
-        return (
-          <group key={node.id} ref={groupRef} position={[node.x, node.y, node.z]}>
-            <mesh position={boxPosition}>
-              <boxGeometry args={[1, 0.5, 0.1]} />
-              <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
-            </mesh>
-            <Text position={[boxPosition[0], boxPosition[1], boxPosition[2] + 0.07]} fontSize={0.25} color="black">
-              {node.id}
-            </Text>
-            {content[node.id].map((leaf, leafIndex) => {
-              const angle = (Math.PI / (content[node.id].length + 1)) * (leafIndex + 1);
-              const leafX = Math.cos(angle) * 1.5;
-              const leafY = Math.sin(angle) * 1.5;
-
-              // Only render the leaf if it's visible
-              if (visibleLeaves.includes(`${node.id}-${leaf.name}`)) {
-                const hasLinks = leaf.links && leaf.links.length > 0;
-
-                return (
-                  <group key={`${node.id}-${leaf.name}`}>
-                    <mesh
-                      position={[leafX, leafY, 0]}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        if (hasLinks) {
-                          onLeafClick(node.id, leaf);
-                        }
-                      }}
-                    >
-                      <boxGeometry args={[0.75, 0.25, 0.05]} />
-                      <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
-                    </mesh>
-                    <Text position={[leafX, leafY, 0.05]} fontSize={0.175} color="black">
-                      {leaf.name}
-                    </Text>
-                    <Line
-                      points={[
-                        new THREE.Vector3(0, 0, 0),
-                        new THREE.Vector3(leafX, leafY, 0)
-                      ]}
-                      color="green"
-                      lineWidth={1}
-                      dashed={false}
-                    />
-                  </group>
-                );
-              }
-              return null;
-            })}
-          </group>
-        );
-      })}
+      {nodes.map((node) => (
+        <Node
+          key={node.id}
+          node={node}
+          groupRef={groupRefs.current[node.id] || (groupRefs.current[node.id] = React.createRef())}
+          camera={camera}
+          visibleLeaves={visibleLeaves}
+          onLeafClick={onLeafClick}
+        />
+      ))}
       <Line
         points={pathPoints}
         color="black"
@@ -209,6 +225,118 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
         dashed={false}
       />
     </group>
+  );
+};
+
+// Node component with hover and appearance animations
+const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick }) => {
+  const [hovered, setHovered] = useState(false);
+
+  const { scale: hoverScale } = useSpring({
+    scale: hovered ? 1.2 : 1,
+    config: { mass: 1, tension: 170, friction: 26 },
+  });
+
+  const { scale: appearScale } = useSpring({
+    from: { scale: 0 },
+    to: { scale: 1 },
+    config: { mass: 1, tension: 170, friction: 26 },
+  });
+
+  useFrame(() => {
+    if (groupRef.current) {
+      const direction = new THREE.Vector3();
+      const groupPosition = groupRef.current.position;
+      direction.subVectors(camera.position, groupPosition).normalize();
+      const angle = Math.atan2(direction.x, direction.z);
+      groupRef.current.rotation.y = angle;
+    }
+  });
+
+  return (
+    <animated.group ref={groupRef} position={[node.x, node.y, node.z]} scale={appearScale}>
+      <animated.mesh
+        position={[0, 0.25, 0]}
+        scale={hoverScale}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <boxGeometry args={[1, 0.5, 0.1]} />
+        <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
+      </animated.mesh>
+      <Text position={[0, 0.25, 0.07]} fontSize={0.25} color="black">
+        {node.id}
+      </Text>
+      {content[node.id].map((leaf, leafIndex) => {
+        const angle = (Math.PI / (content[node.id].length + 1)) * (leafIndex + 1);
+        const leafX = Math.cos(angle) * 1.5;
+        const leafY = Math.sin(angle) * 1.5;
+
+        // Only render the leaf if it's visible
+        if (visibleLeaves.includes(`${node.id}-${leaf.name}`)) {
+          return (
+            <Leaf
+              key={`${node.id}-${leaf.name}`}
+              nodeId={node.id}
+              leaf={leaf}
+              position={[leafX, leafY, 0]}
+              onLeafClick={onLeafClick}
+            />
+          );
+        }
+        return null;
+      })}
+    </animated.group>
+  );
+};
+
+// Leaf component with hover and appearance animations
+const Leaf = ({ nodeId, leaf, position, onLeafClick }) => {
+  const [hovered, setHovered] = useState(false);
+
+  const hasLinks = leaf.links && leaf.links.length > 0;
+
+  const { scale: hoverScale } = useSpring({
+    scale: hovered ? 1.2 : 1,
+    config: { mass: 1, tension: 170, friction: 26 },
+  });
+
+  const { scale: appearScale } = useSpring({
+    from: { scale: 0 },
+    to: { scale: 1 },
+    config: { mass: 1, tension: 170, friction: 26 },
+  });
+
+  return (
+    <animated.group scale={appearScale}>
+      <animated.mesh
+        position={position}
+        scale={hoverScale}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+        onClick={(e) => {
+          e.stopPropagation();
+          if (hasLinks) {
+            onLeafClick(nodeId, leaf);
+          }
+        }}
+      >
+        <boxGeometry args={[0.75, 0.25, 0.05]} />
+        <meshStandardMaterial color="white" emissive="white" emissiveIntensity={1} />
+      </animated.mesh>
+      <Text position={[position[0], position[1], 0.05]} fontSize={0.175} color="black">
+        {leaf.name}
+      </Text>
+      <Line
+        points={[
+          new THREE.Vector3(0, 0, 0),
+          new THREE.Vector3(position[0], position[1], 0),
+        ]}
+        color="green"
+        lineWidth={1}
+        dashed={false}
+      />
+    </animated.group>
   );
 };
 
@@ -280,13 +408,13 @@ const RightSidePanel = ({ revealedNodes }) => {
       position: 'fixed',
       right: 0,
       top: 0,
+      bottom: '60px', // Adjust this value to the footer's height
       width: '30%',
       maxWidth: '500px',
-      height: '100vh',
       backgroundColor: 'rgba(255, 255, 255, 0.8)',
       padding: '20px',
       overflowY: 'auto',
-      boxShadow: '-2px 0 5px rgba(0,0,0,0.1)'
+      boxShadow: '-2px 0 5px rgba(0,0,0,0.3)'
     }}>
       <h2>Moben Haq</h2>
       {revealedNodes.map((node, index) => (
@@ -307,7 +435,7 @@ const RightSidePanel = ({ revealedNodes }) => {
                   <ul>
                     {leaf.links.map((link, linkIndex) => (
                       <li key={linkIndex}>
-                        {link.beforeText}{" "}
+                        {link.beforeText}{' '}
                         <a
                           href={link.url}
                           target="_blank"
@@ -466,42 +594,57 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <div style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        width: '70%',
-        height: '100%',
-        zIndex: 1
-      }}>
-        <CombinedVisualization
-          nodes={nodes}
-          scrollProgress={scrollProgress}
-          pathPoints={pathPoints}
-          visibleLeaves={visibleLeaves}
-          onNodeReached={handleNodeReached}
-          onLeafClick={handleLeafClick}
-          isFreeRotate={isFreeRotate} // Pass the toggle state
-        />
+    <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Main content area */}
+      <div style={{ flex: '1 0 auto', display: 'flex', flexDirection: 'row' }}>
+        {/* Left Side: 3D Visualization */}
+        <div style={{ width: '70%', position: 'relative' }}>
+          {/* Fixed position items inside the left side */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '70%',
+            height: '100%',
+          }}>
+            <CombinedVisualization
+              nodes={nodes}
+              scrollProgress={scrollProgress}
+              pathPoints={pathPoints}
+              visibleLeaves={visibleLeaves}
+              onNodeReached={handleNodeReached}
+              onLeafClick={handleLeafClick}
+              isFreeRotate={isFreeRotate}
+            />
+          </div>
+
+          {/* Toggle Switch */}
+          <div style={{
+            position: 'fixed',
+            bottom: '60px',
+            left: '20px',
+            zIndex: 2,
+            backgroundColor: 'rgba(255, 255, 255, 0.8)',
+            padding: '10px',
+            borderRadius: '5px',
+          }}>
+            <Switch
+              checked={isFreeRotate}
+              onChange={(e) => setIsFreeRotate(e.target.checked)}
+            />
+            <span>{isFreeRotate ? 'Free Rotate' : 'Rotation Locked'}</span>
+          </div>
+
+          {/* Scrollable Content Spacer */}
+          <div style={{ height: '400vh' }} />
+        </div>
+
+        {/* Right Side Panel */}
+        <RightSidePanel revealedNodes={revealedNodes} />
       </div>
-      <div style={{
-        position: 'fixed',
-        bottom: 20,
-        left: 20,
-        zIndex: 2,
-        backgroundColor: 'rgba(255, 255, 255, 0.8)',
-        padding: '10px',
-        borderRadius: '5px'
-      }}>
-        <Switch
-          checked={isFreeRotate}
-          onChange={(e) => setIsFreeRotate(e.target.checked)}
-        />
-        <span>{isFreeRotate ? 'Free Rotate' : 'Rotation Locked'}</span>
-      </div>
-      <RightSidePanel revealedNodes={revealedNodes} />
-      <div style={{ height: '400vh' }} />
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
