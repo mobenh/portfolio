@@ -7,9 +7,11 @@
 
 
 10/10/2024
+    done
+        - add dark mode to the app
+
     - add a footer in the web page for Call-to-Action like Contact Me button
     - deploy this project to AWS S3
     - add this entire project to Gitlab and CI/CD pipeline for AWS Deploy
     - add google analytics to the app
-    - add dark mode to the app
-    
+    - add mobile responsive to the app
