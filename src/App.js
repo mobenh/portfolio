@@ -7,6 +7,7 @@ import { useSpring, animated } from '@react-spring/three';
 import { FaLinkedin, FaGithub } from 'react-icons/fa';
 import { SiReact, SiAngular, SiPython, SiGo, SiJavascript, SiCplusplus, SiTerraform, SiGitlab, SiMicrosoftazure } from 'react-icons/si';
 import { FaAws } from 'react-icons/fa'; // Import FaAws for AWS
+import { Typewriter } from 'react-simple-typewriter';
 
 const content = {
   Languages: [
@@ -253,7 +254,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
       ))}
       <Line
         points={pathPoints}
-        color="black"
+        color={theme.lineColor} // Use theme.lineColor here
         lineWidth={2}
         dashed={false}
       />
@@ -405,6 +406,34 @@ function ResponsiveScene({ children, isFreeRotate }) {
   );
 }
 
+const NameTag = ({ theme }) => {
+  return (
+    <div style={{
+      position: 'fixed', // Keeps the NameTag fixed in the viewport
+      top: '20px',
+      left: 'calc(70% / 2)', // Centers within the left 70% of the viewport
+      transform: 'translateX(-50%)', // Adjusts for the element's own width
+      textAlign: 'center',
+      color: theme.text,
+      zIndex: 10,
+    }}>
+      <h1 style={{ fontSize: '2.5rem', margin: 0 }}>Moben Haq</h1>
+      <p style={{ fontSize: '1.25rem', color: theme.accent, fontFamily: '"Courier New", Courier, monospace' }}>
+        <Typewriter
+          words={['Developing my way into the future', 'Delivering clean code...', 'Crafting beautiful interfaces...']}
+          loop={0} // Set loop to 0 for no infinite loop
+          cursor
+          cursorStyle="|"
+          typeSpeed={50}
+          deleteSpeed={80}
+          delaySpeed={10000}
+        />
+      </p>
+    </div>
+  );
+};
+
+
 // CombinedVisualization component
 function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached, onLeafClick, isFreeRotate, theme }) {
   const controlsRef = useRef();
@@ -458,7 +487,7 @@ const RightSidePanel = ({ revealedNodes, theme }) => {
       overflowY: 'auto',
       boxShadow: '-2px 0 5px rgba(0,0,0,0.3)'
     }}>
-      <h2 style={{ color: theme.panelText }}>Moben Haq</h2>
+      {/* <h2 style={{ color: theme.panelText }}>Moben Haq</h2> */}
       {revealedNodes.map((node, index) => (
         <div key={index} style={{ marginBottom: '20px' }}>
           <h3 style={{ color: theme.panelText }}>{node.id}</h3>
@@ -540,6 +569,7 @@ function App() {
     nodeColor: '#F0F0F0',
     hoverColor: '#2196F3',
     linkHoverColor: '#BB86FC',
+    lineColor: 'black',
   };
 
   const darkTheme = {
@@ -553,8 +583,9 @@ function App() {
     panelBackground: 'rgba(0, 0, 0, 0.8)',
     panelText: '#e0e0e0',
     nodeColor: '#333333',
-    hoverColor: '#BB86FC',
+    hoverColor: '#014a43',
     linkHoverColor: '#03DAC6',
+    lineColor: '#03DAC6', // Dark Goldenrod
   };
 
   const theme = isDarkMode ? darkTheme : lightTheme;
@@ -708,6 +739,9 @@ function App() {
 
   return (
     <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* NameTag component */}
+      <NameTag theme={theme} />
+
       {/* Main content area */}
       <div style={{ flex: '1 0 auto', display: 'flex', flexDirection: 'row' }}>
         {/* Left Side: 3D Visualization */}
