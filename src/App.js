@@ -2,12 +2,13 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
-import { Switch } from '@mui/material';
+import { Switch, IconButton } from '@mui/material';
 import { useSpring, animated } from '@react-spring/three';
-import { FaLinkedin, FaGithub } from 'react-icons/fa';
+import { FaLinkedin, FaGithub, FaAws } from 'react-icons/fa';
 import { SiReact, SiAngular, SiPython, SiGo, SiJavascript, SiCplusplus, SiTerraform, SiGitlab, SiMicrosoftazure } from 'react-icons/si';
-import { FaAws } from 'react-icons/fa'; // Import FaAws for AWS
 import { Typewriter } from 'react-simple-typewriter';
+import MenuIcon from '@mui/icons-material/Menu';
+
 
 const content = {
   Languages: [
@@ -109,7 +110,7 @@ const iconMapping = {
 };
 
 // Define the Footer component within App.js
-function Footer({ theme }) {
+function Footer({ theme, isMobile }) {
   const footerStyle = {
     position: 'fixed',
     bottom: 0,
@@ -118,17 +119,20 @@ function Footer({ theme }) {
     height: '60px',
     backgroundColor: theme.footerBackground,
     color: theme.footerText,
-    padding: '0 20px',
+    padding: isMobile ? '2px 0 0 0' : '0 20px',
     boxSizing: 'border-box',
-    display: 'flex',
+    display: isMobile ? 'block' : 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderTop: `1px solid ${theme.secondary}`,
+    textAlign: 'center',
   };
 
   const linkContainerStyle = {
     display: 'flex',
     alignItems: 'center',
+    justifyContent: isMobile ? 'center' : 'flex-start',
+    marginTop: isMobile ? '10px' : '0',
   };
 
   const linkStyle = {
@@ -162,7 +166,7 @@ function Footer({ theme }) {
           LinkedIn
         </a>
         <a
-          href="https://github.com/moben-haq"
+          href="https://github.com/mobenh"
           target="_blank"
           rel="noopener noreferrer"
           style={{ ...linkStyle, marginLeft: '20px' }}
@@ -408,20 +412,34 @@ function ResponsiveScene({ children, isFreeRotate }) {
 
 const NameTag = ({ theme }) => {
   return (
-    <div style={{
-      position: 'fixed', // Keeps the NameTag fixed in the viewport
-      top: '20px',
-      left: 'calc(70% / 2)', // Centers within the left 70% of the viewport
-      transform: 'translateX(-50%)', // Adjusts for the element's own width
-      textAlign: 'center',
-      color: theme.text,
-      zIndex: 10,
-    }}>
-      <h1 style={{ fontSize: '2.5rem', margin: 0 }}>Moben Haq</h1>
-      <p style={{ fontSize: '1.25rem', color: theme.accent, fontFamily: '"Courier New", Courier, monospace' }}>
+    <div
+      style={{
+        position: 'fixed',
+        top: '20px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        textAlign: 'center',
+        color: theme.text,
+        zIndex: 10,
+      }}
+    >
+      <h1 style={{ fontSize: '2rem', margin: 0 }}>
+        Moben Haq
+      </h1>
+      <p
+        style={{
+          fontSize: '1rem',
+          color: theme.accent,
+          fontFamily: '"Courier New", Courier, monospace',
+        }}
+      >
         <Typewriter
-          words={['Developing my way into the future', 'Delivering clean code...', 'Crafting beautiful interfaces...']}
-          loop={0} // Set loop to 0 for no infinite loop
+          words={[
+            'Developing my way into the future',
+            'Delivering clean code...',
+            'Crafting beautiful interfaces...',
+          ]}
+          loop={0}
           cursor
           cursorStyle="|"
           typeSpeed={50}
@@ -472,76 +490,121 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeave
 }
 
 // Right Side Panel component
-const RightSidePanel = ({ revealedNodes, theme }) => {
-  return (
-    <div style={{
+const RightSidePanel = ({ revealedNodes, theme, isMobile, onClose }) => {
+  const panelStyle = {
+    position: 'fixed',
+    right: 0,
+    top: 0,
+    bottom: isMobile ? 0 : '60px',
+    width: isMobile ? '90%' : '30%',
+    maxWidth: '500px',
+    backgroundColor: theme.panelBackground,
+    color: theme.panelText,
+    padding: '20px',
+    overflowY: 'auto',
+    boxShadow: isMobile ? 'none' : '-2px 0 5px rgba(0,0,0,0.3)',
+    zIndex: 100, // Ensure it's above other elements
+  };
+
+
+  const headerStyle = {
+    color: theme.panelText,
+    fontSize: isMobile ? '1.2rem' : '1.5rem',
+  };
+
+  const listItemStyle = {
+    fontSize: isMobile ? '0.9rem' : '1rem',
+  };
+
+  const overlayStyle = isMobile
+    ? {
       position: 'fixed',
-      right: 0,
       top: 0,
-      bottom: '60px', // Adjust this value to the footer's height
-      width: '30%',
-      maxWidth: '500px',
-      backgroundColor: theme.panelBackground,
-      color: theme.panelText,
-      padding: '20px',
-      overflowY: 'auto',
-      boxShadow: '-2px 0 5px rgba(0,0,0,0.3)'
-    }}>
-      {/* <h2 style={{ color: theme.panelText }}>Moben Haq</h2> */}
-      {revealedNodes.map((node, index) => (
-        <div key={index} style={{ marginBottom: '20px' }}>
-          <h3 style={{ color: theme.panelText }}>{node.id}</h3>
-          <ul>
-            {content[node.id].map((leaf, leafIndex) => (
-              <li key={leafIndex}>
-                <span style={{ display: 'flex', alignItems: 'center', color: theme.panelText }}>
-                  {leaf.url ? (
-                    <a
-                      href={leaf.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{ color: theme.primary, textDecoration: 'underline', display: 'flex', alignItems: 'center' }}
-                    >
-                      {leaf.name}
-                      {iconMapping[leaf.name]}
-                    </a>
-                  ) : (
-                    <>
-                      {leaf.name}
-                      {iconMapping[leaf.name]}
-                    </>
+      left: 0,
+      width: '100%',
+      height: '100%',
+      backgroundColor: 'rgba(0, 0, 0, 0.5)',
+      zIndex: 99,
+    }
+    : {};
+
+  return (
+    <>
+      {isMobile && <div style={overlayStyle} onClick={onClose} />}
+      <div style={panelStyle}>
+        {isMobile && (
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '20px',
+              right: '20px',
+              zIndex: 101,
+              backgroundColor: theme.primary,
+              color: theme.text,
+              border: 'none',
+              padding: '10px',
+              borderRadius: '5px',
+            }}
+          >
+            Close
+          </button>
+        )}
+        {revealedNodes.map((node, index) => (
+          <div key={index} style={{ marginBottom: '20px' }}>
+            <h3 style={headerStyle}>{node.id}</h3>
+            <ul>
+              {content[node.id].map((leaf, leafIndex) => (
+                <li key={leafIndex} style={listItemStyle}>
+                  <span style={{ display: 'flex', alignItems: 'center', color: theme.panelText }}>
+                    {leaf.url ? (
+                      <a
+                        href={leaf.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ color: theme.primary, textDecoration: 'underline', display: 'flex', alignItems: 'center' }}
+                      >
+                        {leaf.name}
+                        {iconMapping[leaf.name]}
+                      </a>
+                    ) : (
+                      <>
+                        {leaf.name}
+                        {iconMapping[leaf.name]}
+                      </>
+                    )}
+                  </span>
+                  {leaf.descriptions && (
+                    <ul>
+                      {leaf.descriptions.map((desc, descIndex) => (
+                        <li key={descIndex} style={{ color: theme.panelText }}>{desc}</li>
+                      ))}
+                    </ul>
                   )}
-                </span>
-                {leaf.descriptions && (
-                  <ul>
-                    {leaf.descriptions.map((desc, descIndex) => (
-                      <li key={descIndex} style={{ color: theme.panelText }}>{desc}</li>
-                    ))}
-                  </ul>
-                )}
-                {leaf.links && (
-                  <ul>
-                    {leaf.links.map((link, linkIndex) => (
-                      <li key={linkIndex} style={{ color: theme.panelText }}>
-                        {link.beforeText}{' '}
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: theme.primary, textDecoration: 'underline' }}
-                        >
-                          {link.text}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ))}
-    </div>
+                  {leaf.links && (
+                    <ul>
+                      {leaf.links.map((link, linkIndex) => (
+                        <li key={linkIndex} style={{ color: theme.panelText }}>
+                          {link.beforeText}{' '}
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: theme.primary, textDecoration: 'underline' }}
+                          >
+                            {link.text}
+                          </a>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </>
   );
 };
 
@@ -554,6 +617,22 @@ function App() {
   const [revealedNodes, setRevealedNodes] = useState([]);
   const [isFreeRotate, setIsFreeRotate] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+
+  // Responsive state
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    handleResize();
+
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // Define themes
   const lightTheme = {
@@ -585,7 +664,7 @@ function App() {
     nodeColor: '#333333',
     hoverColor: '#014a43',
     linkHoverColor: '#03DAC6',
-    lineColor: '#03DAC6', // Dark Goldenrod
+    lineColor: '#03DAC6',
   };
 
   const theme = isDarkMode ? darkTheme : lightTheme;
@@ -737,21 +816,46 @@ function App() {
     }
   };
 
+  // Handle menu click
+  const handleMenuClick = () => {
+    setIsPanelOpen(true);
+  };
+
   return (
     <div className="App" style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+      {/* Menu Button */}
+      {isMobile && (
+        <IconButton
+          onClick={handleMenuClick}
+          style={{
+            position: 'fixed',
+            top: '20px',
+            right: '20px',
+            zIndex: 11,
+            color: theme.text,
+          }}
+        >
+          <MenuIcon />
+        </IconButton>
+      )}
+
       {/* NameTag component */}
-      <NameTag theme={theme} />
+      <NameTag
+        theme={theme}
+        isMobile={isMobile}
+        onMenuClick={() => setIsPanelOpen(true)}
+      />
 
       {/* Main content area */}
-      <div style={{ flex: '1 0 auto', display: 'flex', flexDirection: 'row' }}>
+      <div style={{ flex: '1 0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
         {/* Left Side: 3D Visualization */}
-        <div style={{ width: '70%', position: 'relative' }}>
+        <div style={{ width: isMobile ? '100%' : '70%', position: 'relative' }}>
           {/* Fixed position items inside the left side */}
           <div style={{
             position: 'fixed',
             top: 0,
             left: 0,
-            width: '70%',
+            width: isMobile ? '100%' : '70%',
             height: '100%',
           }}>
             <CombinedVisualization
@@ -766,6 +870,7 @@ function App() {
             />
           </div>
 
+          
           {/* Toggle Switches */}
           <div style={{
             position: 'fixed',
@@ -798,11 +903,26 @@ function App() {
         </div>
 
         {/* Right Side Panel */}
-        <RightSidePanel revealedNodes={revealedNodes} theme={theme} />
+        {isMobile ? (
+          isPanelOpen && (
+            <RightSidePanel
+              revealedNodes={revealedNodes}
+              theme={theme}
+              isMobile={isMobile}
+              onClose={() => setIsPanelOpen(false)}
+            />
+          )
+        ) : (
+          <RightSidePanel
+            revealedNodes={revealedNodes}
+            theme={theme}
+            isMobile={isMobile}
+          />
+        )}
       </div>
 
       {/* Footer */}
-      <Footer theme={theme} />
+      <Footer theme={theme} isMobile={isMobile} />
     </div>
   );
 }
