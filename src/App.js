@@ -456,15 +456,8 @@ const NameTag = ({ theme }) => {
 function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached, onLeafClick, isFreeRotate, theme }) {
   const controlsRef = useRef();
 
-  useEffect(() => {
-    if (controlsRef.current) {
-      controlsRef.current.target.set(0, 0, 0);
-      controlsRef.current.update();
-    }
-  }, [isFreeRotate]);
-
   return (
-    <Canvas>
+    <Canvas style={{ pointerEvents: isFreeRotate ? 'auto' : 'none' }}>
       <ResponsiveScene isFreeRotate={isFreeRotate}>
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
@@ -478,6 +471,7 @@ function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeave
         <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} onNodeReached={onNodeReached} />
         <OrbitControls
           ref={controlsRef}
+          enabled={isFreeRotate}
           enableZoom={false}
           enablePan={false}
           enableRotate={isFreeRotate}
@@ -618,6 +612,8 @@ function App() {
   const [isFreeRotate, setIsFreeRotate] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const controlsRef = useRef(); // <-- Reference for OrbitControls
+
 
   // Responsive state
   const [isMobile, setIsMobile] = useState(false);
@@ -668,6 +664,26 @@ function App() {
   };
 
   const theme = isDarkMode ? darkTheme : lightTheme;
+
+   // Scroll handling to update scroll progress
+   useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY;
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = Math.min(scrollPosition / maxScroll, 1);
+      setScrollProgress(progress);
+
+      // Disable OrbitControls pointer events when rotation is locked
+      if (controlsRef.current && !isFreeRotate) {
+        controlsRef.current.enabled = false;
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [isFreeRotate]); // <-- Ensure `isFreeRotate` is used here
+
 
   // Save isDarkMode to localStorage
   useEffect(() => {
@@ -780,7 +796,8 @@ function App() {
       const progress = Math.min(scrollPosition / maxScroll, 1);
       setScrollProgress(progress);
     };
-    window.addEventListener('scroll', handleScroll);
+    window.addEventListener('scroll', handleScroll, { passive: true }); // Use passive listeners for better performance
+  
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
