@@ -414,13 +414,14 @@ const NameTag = ({ theme }) => {
   return (
     <div
       style={{
-        position: 'fixed',
-        top: '20px',
+        position: 'absolute',
+        top: '20px',  // Adjust this value if you need it closer or further from the top
         left: '50%',
         transform: 'translateX(-50%)',
         textAlign: 'center',
         color: theme.text,
         zIndex: 10,
+        pointerEvents: 'none', // Prevents interaction issues with the 3D canvas
       }}
     >
       <h1 style={{ fontSize: '2rem', margin: 0 }}>
@@ -453,11 +454,44 @@ const NameTag = ({ theme }) => {
 
 
 // CombinedVisualization component
-function CombinedVisualization({ nodes, scrollProgress, pathPoints, visibleLeaves, onNodeReached, onLeafClick, isFreeRotate, theme }) {
+function CombinedVisualization({
+  nodes,
+  scrollProgress,
+  pathPoints,
+  visibleLeaves,
+  onNodeReached,
+  onLeafClick,
+  isFreeRotate,
+  theme,
+}) {
   const controlsRef = useRef();
 
+  // State to track if the device supports hover (i.e., mouse)
+  const [isHoverable, setIsHoverable] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia('(hover: hover)');
+    setIsHoverable(mql.matches);
+
+    const handleChange = (e) => {
+      setIsHoverable(e.matches);
+    };
+
+    // Listen for changes to the hover media query
+    mql.addEventListener('change', handleChange);
+
+    return () => {
+      mql.removeEventListener('change', handleChange);
+    };
+  }, []);
+
+  // Decide the style based on hover capability
+  const canvasStyle = isHoverable
+    ? {}
+    : { pointerEvents: isFreeRotate ? 'auto' : 'none' };
+
   return (
-    <Canvas style={{ pointerEvents: isFreeRotate ? 'auto' : 'none' }}>
+    <Canvas style={canvasStyle}>
       <ResponsiveScene isFreeRotate={isFreeRotate}>
         <ambientLight intensity={0.5} />
         <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} />
@@ -648,7 +682,7 @@ function App() {
   };
 
   const darkTheme = {
-    background: '#121212',
+    background: '#595858',
     text: '#e0e0e0',
     primary: '#BB86FC',
     secondary: '#333333',
@@ -665,8 +699,8 @@ function App() {
 
   const theme = isDarkMode ? darkTheme : lightTheme;
 
-   // Scroll handling to update scroll progress
-   useEffect(() => {
+  // Scroll handling to update scroll progress
+  useEffect(() => {
     const handleScroll = () => {
       const scrollPosition = window.scrollY;
       const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
@@ -797,7 +831,7 @@ function App() {
       setScrollProgress(progress);
     };
     window.addEventListener('scroll', handleScroll, { passive: true }); // Use passive listeners for better performance
-  
+
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
@@ -821,9 +855,14 @@ function App() {
         }
         return prevNodes;
       });
+
+      // Automatically open the panel when the car reaches the last node
+      if (nearbyNode.id === nodes[nodes.length - 1].id) {
+        setIsPanelOpen(true);
+      }
     }
   };
-
+  
   const handleLeafClick = (nodeId, leaf) => {
     if (leaf.url) {
       window.open(leaf.url, '_blank');
@@ -856,13 +895,6 @@ function App() {
         </IconButton>
       )}
 
-      {/* NameTag component */}
-      <NameTag
-        theme={theme}
-        isMobile={isMobile}
-        onMenuClick={() => setIsPanelOpen(true)}
-      />
-
       {/* Main content area */}
       <div style={{ flex: '1 0 auto', display: 'flex', flexDirection: isMobile ? 'column' : 'row' }}>
         {/* Left Side: 3D Visualization */}
@@ -885,9 +917,10 @@ function App() {
               isFreeRotate={isFreeRotate}
               theme={theme}
             />
+            <NameTag theme={theme} />
           </div>
 
-          
+
           {/* Toggle Switches */}
           <div style={{
             position: 'fixed',
