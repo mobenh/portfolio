@@ -12,7 +12,15 @@
 
 
 10/11/2024
-    - add a footer in the web page for Call-to-Action like Contact Me button
+    done
+        - add a footer in the web page
+
+10/15/2024
+    done
+        - add mobile responsive to the app
+
+10/16/2024
+    - 
     - deploy this project to AWS S3
     - add this entire project to Gitlab and CI/CD pipeline for AWS Deploy
     - add google analytics to the app

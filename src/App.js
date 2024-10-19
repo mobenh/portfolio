@@ -3,11 +3,14 @@ import { Canvas, useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls, PerspectiveCamera, Line, Text, useGLTF } from '@react-three/drei';
 import * as THREE from 'three';
 import { Switch, IconButton } from '@mui/material';
-import { useSpring, animated } from '@react-spring/three';
+
 import { FaLinkedin, FaGithub, FaAws } from 'react-icons/fa';
 import { SiReact, SiAngular, SiPython, SiGo, SiJavascript, SiCplusplus, SiTerraform, SiGitlab, SiMicrosoftazure } from 'react-icons/si';
 import { Typewriter } from 'react-simple-typewriter';
 import MenuIcon from '@mui/icons-material/Menu';
+
+import { useSpring as useSpringThree, animated as animatedThree } from '@react-spring/three';
+import { useSpring, animated } from 'react-spring';
 
 
 const content = {
@@ -46,24 +49,24 @@ const content = {
   ],
   Certifications: [
     {
-      name: 'AWS Developer',
+      name: 'AWS',
       links: [
-        { beforeText: 'View the', text: 'Certification', url: 'https://www.credly.com/badges/2be8519a-87bb-4da7-bade-026d50109a5c/public_url' },
+        { beforeText: 'Developer', text: 'Certification', url: 'https://www.credly.com/badges/2be8519a-87bb-4da7-bade-026d50109a5c/public_url' },
       ],
     },
     {
-      name: 'AWS SysOps Administrator',
-      links: [
-        { beforeText: 'View the', text: 'Certification', url: 'https://www.credly.com/badges/3611f19e-cfb4-4633-a5ea-1a095da9f9fd/public_url' },
-      ],
-    },
-    {
-      name: 'Azure Administrator',
+      name: 'Azure',
       links: [
         {
-          beforeText: 'View the', text: 'Certification', url: 'https://learn.microsoft.com/api/credentials/share/en-us/MobenHaq-8295/667B837CAC710E44?sharingId=8DB882188D2F4733'
+          beforeText: 'Administrator', text: 'Certification', url: 'https://learn.microsoft.com/api/credentials/share/en-us/MobenHaq-8295/667B837CAC710E44?sharingId=8DB882188D2F4733'
         }
       ]
+    },
+    {
+      name: 'AWS',
+      links: [
+        { beforeText: 'SysOps Administrator', text: 'Certification', url: 'https://www.credly.com/badges/3611f19e-cfb4-4633-a5ea-1a095da9f9fd/public_url' },
+      ],
     },
   ],
   Contact: [
@@ -270,12 +273,12 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
 const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => {
   const [hovered, setHovered] = useState(false);
 
-  const { scale: hoverScale } = useSpring({
+  const { scale: hoverScale } = useSpringThree({
     scale: hovered ? 1.2 : 1,
     config: { mass: 1, tension: 170, friction: 26 },
   });
 
-  const { scale: appearScale } = useSpring({
+  const { scale: appearScale } = useSpringThree({
     from: { scale: 0 },
     to: { scale: 1 },
     config: { mass: 1, tension: 170, friction: 26 },
@@ -294,8 +297,8 @@ const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => 
   });
 
   return (
-    <animated.group ref={groupRef} position={[node.x, node.y, node.z]} scale={appearScale}>
-      <animated.mesh
+    <animatedThree.group ref={groupRef} position={[node.x, node.y, node.z]} scale={appearScale}>
+      <animatedThree.mesh
         position={[0, 0.25, 0]}
         scale={hoverScale}
         onPointerOver={() => setHovered(true)}
@@ -303,7 +306,7 @@ const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => 
       >
         <boxGeometry args={[1.75, 0.5, 0.1]} />
         <meshStandardMaterial color={hoveredColor} emissive={hoveredColor} emissiveIntensity={1} />
-      </animated.mesh>
+      </animatedThree.mesh>
       <Text position={[0, 0.25, 0.07]} fontSize={0.25} color={theme.text}>
         {node.id}
       </Text>
@@ -327,7 +330,7 @@ const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => 
         }
         return null;
       })}
-    </animated.group>
+    </animatedThree.group>
   );
 };
 
@@ -358,17 +361,17 @@ const Leaf = ({ nodeId, leaf, position, onLeafClick, theme }) => {
   };
 
   return (
-    <animated.group scale={appearScale}>
-      <animated.mesh
+    <animatedThree.group scale={appearScale}>
+      <animatedThree.mesh
         position={position}
         scale={hoverScale}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
         onClick={handleClick}
       >
-        <boxGeometry args={[0.75, 0.25, 0.05]} />
+        <boxGeometry args={[0.85, 0.25, 0.05]} />
         <meshStandardMaterial color={hoveredColor} emissive={hoveredColor} emissiveIntensity={1} />
-      </animated.mesh>
+      </animatedThree.mesh>
       <Text position={[position[0], position[1], 0.05]} fontSize={0.175} color={theme.text}>
         {leaf.name}
       </Text>
@@ -381,7 +384,7 @@ const Leaf = ({ nodeId, leaf, position, onLeafClick, theme }) => {
         lineWidth={1}
         dashed={false}
       />
-    </animated.group>
+    </animatedThree.group>
   );
 };
 
@@ -518,33 +521,35 @@ function CombinedVisualization({
 }
 
 // Right Side Panel component
-const RightSidePanel = ({ revealedNodes, theme, isMobile, onClose }) => {
+const RightSidePanel = ({ revealedNodes, theme, isMobile, isPanelOpen, onClose }) => {
+  const panelWidth = isMobile ? '90%' : '30%';
+
+  // Animation for the panel
+  const animationProps = useSpring({
+    transform: isMobile
+      ? isPanelOpen
+        ? 'translateX(0%)'
+        : 'translateX(100%)' // Slide out of view on mobile when closed
+      : 'translateX(0%)',    // No slide effect on desktop
+    config: { tension: 200, friction: 20 },
+  });
+
   const panelStyle = {
     position: 'fixed',
     right: 0,
     top: 0,
     bottom: isMobile ? 0 : '60px',
-    width: isMobile ? '90%' : '30%',
+    width: panelWidth,
     maxWidth: '500px',
     backgroundColor: theme.panelBackground,
     color: theme.panelText,
     padding: '20px',
     overflowY: 'auto',
     boxShadow: isMobile ? 'none' : '-2px 0 5px rgba(0,0,0,0.3)',
-    zIndex: 100, // Ensure it's above other elements
+    zIndex: 100,
   };
 
-
-  const headerStyle = {
-    color: theme.panelText,
-    fontSize: isMobile ? '1.2rem' : '1.5rem',
-  };
-
-  const listItemStyle = {
-    fontSize: isMobile ? '0.9rem' : '1rem',
-  };
-
-  const overlayStyle = isMobile
+  const overlayStyle = isMobile && isPanelOpen
     ? {
       position: 'fixed',
       top: 0,
@@ -554,12 +559,23 @@ const RightSidePanel = ({ revealedNodes, theme, isMobile, onClose }) => {
       backgroundColor: 'rgba(0, 0, 0, 0.5)',
       zIndex: 99,
     }
-    : {};
+    : null;
+
+  // Define missing styles
+  const headerStyle = {
+    color: theme.panelText,
+    fontSize: isMobile ? '1rem' : '1.25rem',
+  };
+
+  const listItemStyle = {
+    fontSize: isMobile ? '0.8rem' : '0.9rem',
+    color: theme.panelText,
+  };
 
   return (
     <>
-      {isMobile && <div style={overlayStyle} onClick={onClose} />}
-      <div style={panelStyle}>
+      {overlayStyle && <div style={overlayStyle} onClick={onClose} />}
+      <animated.div style={{ ...panelStyle, ...animationProps }}>
         {isMobile && (
           <button
             onClick={onClose}
@@ -578,6 +594,7 @@ const RightSidePanel = ({ revealedNodes, theme, isMobile, onClose }) => {
             Close
           </button>
         )}
+        {/* Panel content */}
         {revealedNodes.map((node, index) => (
           <div key={index} style={{ marginBottom: '20px' }}>
             <h3 style={headerStyle}>{node.id}</h3>
@@ -631,7 +648,7 @@ const RightSidePanel = ({ revealedNodes, theme, isMobile, onClose }) => {
             </ul>
           </div>
         ))}
-      </div>
+      </animated.div>
     </>
   );
 };
@@ -862,7 +879,7 @@ function App() {
       }
     }
   };
-  
+
   const handleLeafClick = (nodeId, leaf) => {
     if (leaf.url) {
       window.open(leaf.url, '_blank');
@@ -953,22 +970,13 @@ function App() {
         </div>
 
         {/* Right Side Panel */}
-        {isMobile ? (
-          isPanelOpen && (
-            <RightSidePanel
-              revealedNodes={revealedNodes}
-              theme={theme}
-              isMobile={isMobile}
-              onClose={() => setIsPanelOpen(false)}
-            />
-          )
-        ) : (
-          <RightSidePanel
-            revealedNodes={revealedNodes}
-            theme={theme}
-            isMobile={isMobile}
-          />
-        )}
+        <RightSidePanel
+          revealedNodes={revealedNodes}
+          theme={theme}
+          isMobile={isMobile}
+          isPanelOpen={isPanelOpen}
+          onClose={() => setIsPanelOpen(false)}
+        />
       </div>
 
       {/* Footer */}
