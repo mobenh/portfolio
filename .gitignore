@@ -36,7 +36,6 @@ pnpm-debug.log*
 .next/
 
 # TailwindCSS built output
-*.css
 *.css.map
 
 # Windows specific files

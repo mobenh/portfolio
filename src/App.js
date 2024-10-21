@@ -12,6 +12,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import { useSpring as useSpringThree, animated as animatedThree } from '@react-spring/three';
 import { useSpring, animated } from 'react-spring';
 
+import ReactGA from 'react-ga4';
 
 const content = {
   Languages: [
@@ -26,12 +27,12 @@ const content = {
       descriptions: ['React.js, AWS, and Gitlab'],
       links: [
         { beforeText: 'Visit the', text: 'mobenh.com', url: 'https://mobenh.com' },
-        { beforeText: 'View the', text: 'GitHub Repo', url: 'https://github.com/mobenh/react-portfolio' },
+        { beforeText: 'View the', text: 'GitLab Repo', url: 'https://gitlab.com/mobenh/portfolio' },
       ],
     },
     {
       name: 'Cloud',
-      descriptions: ['EC2, AWS CLI, and Terraform.'],
+      descriptions: ['EC2, AWS CLI, and Terraform'],
       links: [
         { beforeText: 'View the', text: 'GitHub Repo', url: 'https://github.com/mobenh/terraform-aws-ec2instance' },
       ],
@@ -242,7 +243,7 @@ const getPointAtDistance = (points, distance) => {
 };
 
 // NodeDiagram component with animations
-const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLeaves, onLeafClick, theme }) => {
+const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLeaves, onLeafClick, theme, isMobile}) => {
   const groupRefs = useRef({});
   const { camera } = useThree();
 
@@ -257,6 +258,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
           visibleLeaves={visibleLeaves}
           onLeafClick={onLeafClick}
           theme={theme}
+          isMobile={isMobile}  // Pass isMobile here
         />
       ))}
       <Line
@@ -270,7 +272,7 @@ const NodeDiagram = ({ nodes, pathPoints, boxPosition = [0, 0.25, 0], visibleLea
 };
 
 // Node component with hover and appearance animations
-const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => {
+const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme, isMobile}) => {
   const [hovered, setHovered] = useState(false);
 
   const { scale: hoverScale } = useSpringThree({
@@ -299,21 +301,22 @@ const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => 
   return (
     <animatedThree.group ref={groupRef} position={[node.x, node.y, node.z]} scale={appearScale}>
       <animatedThree.mesh
-        position={[0, 0.25, 0]}
+        position={isMobile ? [0, 0.375, 0] : [0, 0.25, 0]}
         scale={hoverScale}
         onPointerOver={() => setHovered(true)}
         onPointerOut={() => setHovered(false)}
       >
-        <boxGeometry args={[1.75, 0.5, 0.1]} />
+        <boxGeometry args={isMobile ? [2.5, .75, 0.2] : [1.75, 0.5, 0.1]} />
         <meshStandardMaterial color={hoveredColor} emissive={hoveredColor} emissiveIntensity={1} />
       </animatedThree.mesh>
-      <Text position={[0, 0.25, 0.07]} fontSize={0.25} color={theme.text}>
+      <Text position={isMobile ? [0, 0.375, 0.13] : [0, 0.25, 0.13]} fontSize={isMobile ? 0.375 : 0.25} color={theme.text}>
         {node.id}
       </Text>
       {content[node.id].map((leaf, leafIndex) => {
         const angle = (Math.PI / (content[node.id].length + 1)) * (leafIndex + 1);
-        const leafX = Math.cos(angle) * 1.5;
-        const leafY = Math.sin(angle) * 1.5;
+        const radius = isMobile ? 1.95 : 1.5;  // Increase radius on mobile
+        const leafX = Math.cos(angle) * radius;
+        const leafY = Math.sin(angle) * radius;
 
         // Only render the leaf if it's visible
         if (visibleLeaves.includes(`${node.id}-${leaf.name}`)) {
@@ -325,6 +328,7 @@ const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => 
               position={[leafX, leafY, 0]}
               onLeafClick={onLeafClick}
               theme={theme}
+              isMobile={isMobile}  // Pass isMobile
             />
           );
         }
@@ -335,7 +339,7 @@ const Node = ({ node, groupRef, camera, visibleLeaves, onLeafClick, theme }) => 
 };
 
 // Leaf component with hover and appearance animations
-const Leaf = ({ nodeId, leaf, position, onLeafClick, theme }) => {
+const Leaf = ({ nodeId, leaf, position, onLeafClick, theme, isMobile}) => {
   const [hovered, setHovered] = useState(false);
 
   const { scale: hoverScale } = useSpring({
@@ -353,6 +357,11 @@ const Leaf = ({ nodeId, leaf, position, onLeafClick, theme }) => {
 
   const handleClick = (e) => {
     e.stopPropagation();
+    ReactGA.event({
+      category: 'Leaf Node',
+      action: 'Click',
+      label: `${nodeId}-${leaf.name}`,
+    });
     if (leaf.url) {
       window.open(leaf.url, '_blank');
     } else if (leaf.links && leaf.links.length > 0) {
@@ -369,10 +378,10 @@ const Leaf = ({ nodeId, leaf, position, onLeafClick, theme }) => {
         onPointerOut={() => setHovered(false)}
         onClick={handleClick}
       >
-        <boxGeometry args={[0.85, 0.25, 0.05]} />
+        <boxGeometry args={isMobile ? [1.15, 0.5, 0.1] : [0.85, 0.25, 0.05]} />
         <meshStandardMaterial color={hoveredColor} emissive={hoveredColor} emissiveIntensity={1} />
       </animatedThree.mesh>
-      <Text position={[position[0], position[1], 0.05]} fontSize={0.175} color={theme.text}>
+      <Text position={isMobile ? [position[0], position[1], 0.09] : [position[0], position[1], 0.05]} fontSize={isMobile ? 0.2625 : 0.175} color={theme.text}>
         {leaf.name}
       </Text>
       <Line
@@ -455,7 +464,6 @@ const NameTag = ({ theme }) => {
   );
 };
 
-
 // CombinedVisualization component
 function CombinedVisualization({
   nodes,
@@ -466,6 +474,7 @@ function CombinedVisualization({
   onLeafClick,
   isFreeRotate,
   theme,
+  isMobile,  // Accept isMobile
 }) {
   const controlsRef = useRef();
 
@@ -504,6 +513,7 @@ function CombinedVisualization({
           visibleLeaves={visibleLeaves}
           onLeafClick={onLeafClick}
           theme={theme}
+          isMobile={isMobile}  // Pass isMobile here
         />
         <CarAnimation pathPoints={pathPoints} scrollProgress={scrollProgress} onNodeReached={onNodeReached} />
         <OrbitControls
@@ -668,6 +678,11 @@ function App() {
 
   // Responsive state
   const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    ReactGA.initialize('G-YW8K9JRN3W');
+    ReactGA.send('pageview');
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -933,6 +948,7 @@ function App() {
               onLeafClick={handleLeafClick}
               isFreeRotate={isFreeRotate}
               theme={theme}
+              isMobile={isMobile}  // Pass isMobile here
             />
             <NameTag theme={theme} />
           </div>
@@ -959,7 +975,14 @@ function App() {
             <div>
               <Switch
                 checked={isDarkMode}
-                onChange={(e) => setIsDarkMode(e.target.checked)}
+                onChange={(e) => {
+                  setIsDarkMode(e.target.checked);
+                  ReactGA.event({
+                    category: 'Toggle',
+                    action: 'Dark Mode',
+                    label: e.target.checked ? 'Enabled' : 'Disabled',
+                  });
+                }}
               />
               <span>{isDarkMode ? 'Dark Mode' : 'Light Mode'}</span>
             </div>
